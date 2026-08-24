@@ -37,7 +37,7 @@ repos:
     # Bump this to whatever https://github.com/ivan-pinatti/pre-commit-checklists/releases
     # lists as latest; see that library's docs/versioning.md for what the
     # pin means and how a bump can change hook behavior.
-    rev: v2.1.1
+    rev: v2.2.3
     hooks:
       # Large-file/merge-conflict/line-ending hygiene, safe on any repo.
       - id: checklist-basic
