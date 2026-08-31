@@ -9,6 +9,15 @@ name: PR Validation
 # workflow commits or pushes to the PR branch on its own. A repository
 # created from this template inherits that behavior unchanged.
 #
+# The pre-commit job below publishes the exact check context "Pre-commit"
+# (its name:, not its job id), because docs/MERGE_PIPELINE.md's
+# bot-auto-merge.yml and coderabbit-review-queue.yml hardcode that string as
+# a required context to wait on. It was named "Pre-Commit Checks" before the
+# org's merge pipeline was ported in; renaming a required check's context
+# after branch protection already requires the old name breaks the very
+# next pull request until branch protection is updated to match, which is
+# why that update is part of the same change that renamed this job.
+#
 # A pull request opened from a fork gets a read only GITHUB_TOKEN, so
 # labeler and the "Post Pre-Commit Log" job below, the only two things
 # here that need pull-requests: write, are guarded at the job level with
@@ -43,12 +52,26 @@ name: PR Validation
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
+  # Required checks are evaluated against the merge queue's own temporary
+  # commit, not a pull request's head, once main's merge_group ruleset is
+  # in place (see docs/MERGE_PIPELINE.md). This job needs the trigger or the
+  # queue stalls forever waiting for a "Pre-commit" context that never gets
+  # republished on its commit. Harmless with no merge_group ruleset
+  # configured: the trigger simply never fires, which is the state a repo
+  # created from this template starts in until it sets one up.
+  merge_group:
 
 # A new push supersedes whatever this workflow is still doing for the same
 # PR, so a rapid series of pushes doesn't leave several stale runs racing
-# each other.
+# each other. github.event.pull_request.number is unset on a merge_group
+# event, so that alone would put every merge-queue run into the same group
+# and let cancel-in-progress cancel a run the queue still needs; falling
+# back to merge_group.head_ref (unique per queue entry) and then github.ref
+# keeps each queue entry, and any other trigger shape, in its own group.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: >-
+    ${{ github.workflow }}-${{ github.event.pull_request.number ||
+    github.event.merge_group.head_ref || github.ref }}
   cancel-in-progress: true
 
 permissions: {}
@@ -81,7 +104,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
   pre-commit:
-    name: Pre-Commit Checks
+    name: Pre-commit
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:

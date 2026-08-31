@@ -1,6 +1,10 @@
 # pre-commit
 pre-commit.log
 
+# Python (scripts/*.py)
+__pycache__/
+*.pyc
+
 # Editors
 .idea/
 .vscode/*

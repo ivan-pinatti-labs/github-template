@@ -1,11 +1,11 @@
 ---
 # Starter pre-commit config for a repo created from this template. Pulls
-# the language-agnostic checklists from ivan-pinatti/pre-commit-checklists:
+# the language-agnostic checklists from ivan-pinatti-labs/pre-commit-checklists:
 # file hygiene, spelling, the common structured file types, credential
 # scanning, and the two git message/branch-name guards. Add a
 # language-specific checklist id (checklist-dev-python, checklist-dev-shell,
 # and so on) once you know what the new repo is actually written in; see
-# https://github.com/ivan-pinatti/pre-commit-checklists/blob/main/docs/hook-catalogue.md
+# https://github.com/ivan-pinatti-labs/pre-commit-checklists/blob/main/docs/hook-catalogue.md
 # for the full list.
 #
 # checklist-dev-dotenv is deliberately not selected below: since
@@ -33,8 +33,8 @@
 # also re-run during that commit-msg invocation.
 default_install_hook_types: [pre-commit, commit-msg]
 repos:
-  - repo: https://github.com/ivan-pinatti/pre-commit-checklists
-    # Bump this to whatever https://github.com/ivan-pinatti/pre-commit-checklists/releases
+  - repo: https://github.com/ivan-pinatti-labs/pre-commit-checklists
+    # Bump this to whatever https://github.com/ivan-pinatti-labs/pre-commit-checklists/releases
     # lists as latest; see that library's docs/versioning.md for what the
     # pin means and how a bump can change hook behavior.
     rev: v2.1.1
@@ -58,9 +58,15 @@ repos:
         types: [markdown]
         stages: [pre-commit]
 
-      # Validates JSON syntax and formats with Prettier.
+      # Validates JSON syntax and formats with Prettier. types_or: [json,
+      # json5], not a plain types: [json]: .github/renovate.json5 is typed
+      # json5 by identify, not json, so a plain types: [json] would match
+      # nothing on it at all. check-json self-filters on its own
+      # types: [json] and never sees the json5 file, which is correct: it is
+      # a strict JSON parser and renovate.json5 has comments and unquoted
+      # keys. Prettier reads json5 natively and formats it.
       - id: checklist-json
-        types: [json]
+        types_or: [json, json5]
         stages: [pre-commit]
 
       # Validates YAML syntax, lints with yamllint, formats with Prettier.
@@ -84,7 +90,7 @@ repos:
 
       # Blocks committed private keys and known secret patterns. Requires
       # a .secrets.baseline file at the repo root; see
-      # ivan-pinatti/pre-commit-checklists' scripts/install.sh to generate one.
+      # ivan-pinatti-labs/pre-commit-checklists' scripts/install.sh to generate one.
       - id: checklist-security-credentials
         stages: [pre-commit]
 
@@ -111,7 +117,21 @@ repos:
       # Lints GitHub Actions workflow files with actionlint-docker (needs
       # Docker on PATH) and audits them with zizmor (needs Python 3.10 or
       # newer on PATH, offline audits only, no token required); see this
-      # repo's README.
+      # repo's README. This id's own files: pattern already reaches every
+      # workflow the merge pipeline adds (coderabbit-gate.yml,
+      # coderabbit-review-queue.yml, bot-auto-merge.yml) since all of them
+      # live under .github/; no separate selector is needed for those.
       - id: checklist-github-actions
         files: ^\.github/
+        stages: [pre-commit]
+
+      # check-ast, check-builtin-literals, debug-statements,
+      # requirements-txt-fixer, ruff-check --fix, ruff-format. Scoped to
+      # scripts/, not the whole repo: this template stays language-agnostic,
+      # and the only Python here is the merge pipeline's two verdict scripts
+      # (scripts/assert-pin-only-diff.py, scripts/coderabbit-review-verdict.py).
+      # Drop this id, or widen the selector, once the repo created from this
+      # template actually is a Python project.
+      - id: checklist-dev-python
+        files: ^scripts/.*\.py$
         stages: [pre-commit]

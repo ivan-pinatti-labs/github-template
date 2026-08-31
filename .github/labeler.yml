@@ -4,7 +4,7 @@
 #
 # Only the two categories every repo has are defined below. Add more once
 # this project has directories worth labeling on their own, for example a
-# "scripts" or "docs" split like ivan-pinatti/pre-commit-checklists uses.
+# "scripts" or "docs" split like ivan-pinatti-labs/pre-commit-checklists uses.
 documentation:
   - changed-files:
       - any-glob-to-any-file:
