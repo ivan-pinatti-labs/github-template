@@ -1,17 +1,37 @@
 ---
 version: 2
+
+# Dependabot handles GitHub Actions and pre-commit hook revs; Renovate
+# handles the asdf tool versions in .tool-versions, which Dependabot cannot
+# parse. See renovate.json5 in this directory.
+#
+# Scheduled Saturday, not the Monday ivan-pinatti-labs/rsync-crypt uses or
+# the Tuesday ivan-pinatti-labs/.github uses: see that org's
+# docs/BOT_SCHEDULE.md, which reserves Saturday as a spare day for exactly
+# this kind of addition. CodeRabbit's review quota is shared across the
+# whole GitHub App installation, not handed out per repository, so two
+# repositories' bots opening pull requests in the same hour would queue
+# behind each other and both look stuck for no visible reason; the day
+# reservation is what avoids that.
+#
+# A repo created from this template inherits this same Saturday slot. If
+# more than one such repo is ever active in this organization at once, pick
+# a different day or hour for the new one and record it in
+# ivan-pinatti-labs/.github's docs/BOT_SCHEDULE.md, the same way this repo's
+# own slot is recorded there, so two template-derived repos do not end up
+# colliding with each other.
 updates:
   # Covers .pre-commit-config.yaml at the repo root. Dependabot's
   # pre-commit ecosystem only ever reads a file literally named
   # .pre-commit-config.yaml, so if you later add other pre-commit configs
-  # elsewhere (see ivan-pinatti/pre-commit-checklists' own split between
-  # dependabot.yml and renovate.json5 for why), watch them with Renovate
-  # instead. See renovate.json5 in this directory.
+  # elsewhere (see ivan-pinatti-labs/pre-commit-checklists' own split
+  # between dependabot.yml and renovate.json5 for why), watch them with
+  # Renovate instead. See renovate.json5 in this directory.
   - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:
       interval: weekly
-      day: monday
+      day: saturday
       time: "06:00"
       timezone: "America/Toronto"
     labels:
@@ -29,7 +49,7 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
-      day: monday
+      day: saturday
       time: "06:30"
       timezone: "America/Toronto"
     labels:

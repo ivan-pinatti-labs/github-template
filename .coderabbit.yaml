@@ -1,20 +1,33 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.json
 #
-# Generic starting point for a repo created from this template. Tune the
-# tools block below once you know what pre-commit hooks this repo actually
-# runs: anything enabled twice (once as a pre-commit hook, once as a
-# CodeRabbit tool) reviews the same finding twice for no benefit.
+# Generic starting point for a repo created from this template, aligned with
+# the org-wide merge pipeline documented in docs/MERGE_PIPELINE.md: this
+# repo's own `Review Verified` context depends on both settings below being
+# exactly what they say. Tune the tools block once you know what pre-commit
+# hooks this repo actually runs: anything enabled twice (once as a
+# pre-commit hook, once as a CodeRabbit tool) reviews the same finding twice
+# for no benefit.
 
 language: en-US
 
 reviews:
   auto_review:
+    # Never stop reviewing a branch for being busy. The default is 5, which
+    # pauses automatic reviews once five commits on a branch have been
+    # reviewed, and the pause is silent: the CodeRabbit check still reports
+    # green, so the pull request looks reviewed when nothing has read its
+    # current head. See rsync-crypt's .coderabbit.yaml for where this was
+    # first found and fixed (pre-commit-checklists#12, twelve hours with no
+    # review of the current head and no visible sign anything was waiting).
+    auto_pause_after_reviewed_commits: 0
+
     # CodeRabbit is a GitHub App posting a check, not a workflow job, so it
     # cannot be ordered after pre-commit with a needs: dependency the way a
     # workflow job can. Skipping drafts is the lever instead: open a pull
     # request as a draft, let pre-commit finish, then mark it ready. This
-    # is the default, stated explicitly here because the review order
-    # depends on it.
+    # is the default, stated explicitly here because both the review order
+    # and docs/MERGE_PIPELINE.md's `Review Verified` draft lane depend on
+    # it.
     drafts: false
   # tools: is commented out entirely, deliberately. Left present with
   # nothing under it, YAML parses it as null rather than an empty object,

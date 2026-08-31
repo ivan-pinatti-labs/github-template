@@ -1,38 +1,132 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
 
-  // Dependabot already handles .pre-commit-config.yaml and GitHub Actions
-  // versions, see dependabot.yml. Renovate is left enabled here, generic
-  // and unscoped, as the catch-all for anything Dependabot's ecosystems
-  // do not cover once this template grows real dependencies, for example
-  // a Terraform module registry, an asdf .tool-versions file, or a second
-  // pre-commit config living outside the repo root. See
-  // ivan-pinatti/pre-commit-checklists' own renovate.json5 for a worked
-  // example of narrowing this to one extra directory without fighting
-  // Dependabot over the same file.
+  // Dependabot handles GitHub Actions and pre-commit hook revs inside
+  // .pre-commit-config.yaml, see dependabot.yml. Renovate handles the one
+  // thing Dependabot's pre-commit ecosystem cannot: the asdf tool versions
+  // pinned in .tool-versions (pre-commit, github-cli). There is no
+  // .env.example or annotated version string here for a custom regex
+  // manager to track, unlike ivan-pinatti-labs/rsync-crypt's copy of this
+  // file, so enabledManagers below is narrower than that repo's.
+  //
+  // enabledManagers below is scoped to asdf only, not left as a generic
+  // catch-all the way this template's config was before this file was
+  // aligned with the org's merge pipeline (docs/MERGE_PIPELINE.md):
+  // Dependabot already owns github-actions and pre-commit here, and this
+  // repo has nothing else for Renovate to manage. A repo created from this
+  // template that grows real dependencies beyond .tool-versions (npm, pip,
+  // a Dockerfile, a Terraform module registry, ...) needs to widen
+  // enabledManagers, or drop it entirely to fall back to config:recommended's
+  // own defaults, once it has something else for Renovate to watch.
   extends: ["config:recommended"],
 
-  // config:recommended enables a standing "Dependency Dashboard" issue
-  // that never resolves on its own; PRs still open on schedule without it,
-  // this just drops the one consolidated overview issue.
-  // Enabled deliberately. With the dashboard off, "nothing to update" and
-  // "Renovate silently stopped seeing these dependencies" look identical.
-  // Dependabot discarded every candidate release in this repository for days
-  // because of GitHub's undocumented three day cooldown default, and it
-  // presented exactly as everything being current. The dashboard is the only
-  // place Renovate surfaces detection errors and rate limited updates, which
-  // matters most for the custom managers below, since those depend on hand
-  // written patterns that match nothing if a file is renamed.
+  // Kept on despite the standing, never-resolving tracking issue it opens.
+  // Without it, "Renovate found nothing to update" and "Renovate silently
+  // stopped seeing your dependencies" look identical, and the dashboard is
+  // the only place Renovate reports detection errors and rate-limited
+  // updates.
   dependencyDashboard: true,
 
   timezone: "America/Toronto",
-  schedule: ["before 7am on Monday"],
+
+  // Saturday, matching dependabot.yml's own slot in this repository (see
+  // the reasoning there and in ivan-pinatti-labs/.github's
+  // docs/BOT_SCHEDULE.md): CodeRabbit's review quota is shared across the
+  // whole GitHub App installation, so keeping every one of this repo's bots
+  // inside the same reserved day avoids competing with
+  // ivan-pinatti-labs/rsync-crypt's Monday window or ivan-pinatti-labs/.github's
+  // Tuesday one.
+  //
+  // A single day, not the daily "before 7am" ivan-pinatti-labs/rsync-crypt
+  // and ivan-pinatti-labs/.github both use. Weekly does reopen the gap
+  // their comments warn about: a release that misses this Saturday slot by
+  // a day waits a full extra week behind minimumReleaseAge's 7 day floor
+  // below, up to 14 days total instead of 7. Accepted here because this
+  // repository's whole Renovate-managed surface is two asdf tool pins
+  // (pre-commit, github-cli); the daily check earns its keep on a larger
+  // dependency surface more than it does on this one, and staying inside a
+  // single reserved day keeps the schedule easy to reason about against
+  // BOT_SCHEDULE.md. Revisit this if a repo created from this template
+  // grows a materially larger Renovate surface.
+  schedule: ["before 7am on Saturday"],
 
   labels: ["dependencies"],
   commitMessagePrefix: "chore:",
 
-  // Keep PR volume manageable.
+  // Keep PR volume manageable so CI is not overwhelmed.
   prConcurrentLimit: 5,
   prHourlyLimit: 2,
+
+  // The default deny. Overridden per update type by the first packageRules
+  // entry below, which is the only place that grants it: an update type
+  // this config has not thought about arrives unlabelled and waits for a
+  // person rather than merging on the strength of a default nobody chose.
   automerge: false,
+
+  // Dependabot owns github-actions and pre-commit hook revs; disabling
+  // everything but asdf here avoids duplicate pull requests for the same
+  // update.
+  enabledManagers: ["asdf"],
+
+  // A cooling window before an update is offered at all, mirroring
+  // ivan-pinatti-labs/rsync-crypt's reasoning: `Pin Only` proves a diff
+  // changed nothing but a version token, and says so in its own docstring,
+  // but it cannot tell a good release from a backdoored one, because a
+  // fresh supply chain attack has no advisory yet for any scanner to match.
+  // Age is the only defence against that, and granting automerge above
+  // without it would mean merging a release published minutes earlier,
+  // unattended, with no person ever looking.
+  //
+  // Seven days, the same as the sibling repositories, because the reasoning
+  // is about how long a compromised release typically takes to be spotted
+  // and pulled, not about this repository's (much smaller) dependency
+  // surface. Two asdf tool pins carry no materially different risk profile
+  // that would justify a shorter wait.
+  minimumReleaseAge: "7 days",
+
+  // Hold the pull request until the window is satisfied rather than opening
+  // one that is not allowed to merge yet. Without this, minimumReleaseAge
+  // still gates the merge, but Renovate opens the pull request immediately
+  // regardless, so it would sit for up to seven days looking blocked for no
+  // visible reason instead of not existing yet.
+  internalChecksFilter: "strict",
+
+  // The exception: a fix for a known vulnerability is not made safer by
+  // aging, and null clears the inherited window for these updates only.
+  vulnerabilityAlerts: {
+    minimumReleaseAge: null,
+  },
+
+  packageRules: [
+    // What may merge without anyone looking, and the label that says so.
+    //
+    // First in the list on purpose: later rules win on any key they share
+    // with an earlier one, and the group rule below sets a name and labels,
+    // not automerge policy, so it cannot accidentally override this by
+    // coming after it.
+    //
+    // The label is the whole point. bot-auto-merge.yml approves a Renovate
+    // pull request only when it carries `automerge`, reading the label
+    // rather than restating which update types are eligible, so the policy
+    // lives here, once. `Pin Only` is the actual security gate behind that
+    // trust: every changed line still has to be nothing but a version in a
+    // pin position, checked line by line, before the label alone can do
+    // anything; see docs/MERGE_PIPELINE.md.
+    //
+    // patch and minor only. Either asdf tool here (pre-commit, github-cli)
+    // could in principle offer a major, which is exactly the case that
+    // needs a person to check nothing else in this repository's tooling
+    // assumes the old major's behavior.
+    {
+      matchUpdateTypes: ["patch", "minor"],
+      automerge: true,
+      addLabels: ["automerge"],
+    },
+    {
+      matchManagers: ["asdf"],
+      groupName: "asdf tool versions",
+      groupSlug: "asdf-tools",
+      labels: ["dependencies", "tooling"],
+    },
+  ],
 }

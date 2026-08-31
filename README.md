@@ -27,7 +27,7 @@ REPLACE_ME_PROJECT_DESCRIPTION
 ## What you get
 
 - **Pre-commit**, consuming the checklists published by
-  [ivan-pinatti/pre-commit-checklists](https://github.com/ivan-pinatti/pre-commit-checklists)
+  [ivan-pinatti-labs/pre-commit-checklists](https://github.com/ivan-pinatti-labs/pre-commit-checklists)
   through a single `repo:` entry and a `rev:` pin: see
   [.pre-commit-config.yaml](.pre-commit-config.yaml).
 - **PR validation**: a workflow that runs pre-commit on every pull request,
@@ -45,11 +45,20 @@ REPLACE_ME_PROJECT_DESCRIPTION
 - **Dependabot**, watching `.pre-commit-config.yaml` and every
   `.github/workflows/*.yml` action pin. See
   [.github/dependabot.yml](.github/dependabot.yml).
-- **Renovate**, enabled generically as a catch-all for whatever Dependabot
-  does not cover once the project has real dependencies. See
+- **Renovate**, scoped to the asdf tool pins in `.tool-versions`, the one
+  pin surface Dependabot cannot read. See
   [.github/renovate.json5](.github/renovate.json5).
-- **CodeRabbit**, reviewing pull requests once they leave draft state. See
-  [.coderabbit.yaml](.coderabbit.yaml).
+- **CodeRabbit**, reviewing pull requests once they leave draft state, plus
+  the org's merge pipeline: `CodeRabbit Gate` publishes `Pin Only` and
+  `Review Verified` as required status checks, `CodeRabbit Review Queue`
+  nudges CodeRabbit into reviewing a dependency bot's pull request (which it
+  never does unattended), and `Bot Auto Merge` supplies the approving review
+  a pin-only dependency bump, or the repository owner's own pull request,
+  needs to enter the merge queue. See
+  [.coderabbit.yaml](.coderabbit.yaml) and
+  [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) for the full mechanics,
+  including what branch protection, the merge queue ruleset, and two GitHub
+  App installations expect from a repository created from this template.
 - **Issue and pull request templates**, a stale-issue policy, a
   `CODEOWNERS` file, and a `FUNDING.yml`, all under
   [.github/](.github/).
@@ -67,7 +76,7 @@ ecosystem beyond `pre-commit` and `github-actions`. Once you know what
 the new project is written in, add the pieces that fit it, for example a
 language-specific pre-commit checklist id (`checklist-dev-python`,
 `checklist-dev-shell`, and so on, see
-[pre-commit-checklists' hook catalogue](https://github.com/ivan-pinatti/pre-commit-checklists/blob/main/docs/hook-catalogue.md))
+[pre-commit-checklists' hook catalogue](https://github.com/ivan-pinatti-labs/pre-commit-checklists/blob/main/docs/hook-catalogue.md))
 and a matching Dependabot ecosystem block.
 
 ## Using this template
@@ -96,10 +105,26 @@ review automation, and the usual community files already wired up.
 
 4. Add a language-specific pre-commit checklist id, and a matching
    Dependabot ecosystem in [.github/dependabot.yml](.github/dependabot.yml),
-   once you know what the project is written in.
-5. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
+   once you know what the project is written in. Widen, or drop, the
+   `enabledManagers` restriction in
+   [.github/renovate.json5](.github/renovate.json5) at the same time:
+   as shipped it is scoped to the asdf tool pins in `.tool-versions`
+   only, on the assumption that Dependabot already owns everything else
+   this template ships with.
+5. Set up what the merge pipeline in
+   [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) needs but does not ship
+   as a file: branch protection and the merge queue ruleset on `main` (only
+   after this new repository's first pull request, the one that actually
+   adds these workflows, has merged; see that document's "The bootstrap
+   gap"), the new repository added to both the CodeRabbit and Renovate
+   GitHub App installations' selected-repository lists, the
+   `CODERABBIT_NUDGE_TOKEN` org secret's visibility extended to it, and a
+   `.github/dependabot.yml` / `.github/renovate.json5` schedule that does
+   not collide with a sibling repository's (see
+   `ivan-pinatti-labs/.github`'s `docs/BOT_SCHEDULE.md`).
+6. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
    is the right choice for the new project, and replace it if not.
-6. Delete this section, and the section above it, once the new project has
+7. Delete this section, and the section above it, once the new project has
    its own README content to replace them with.
 
 ## License

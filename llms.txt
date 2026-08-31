@@ -24,5 +24,5 @@ in your project.
 
 - Conventional Commits for commit messages, no ticket prefix baked in
 - pre-commit hooks wired up via
-  [ivan-pinatti/pre-commit-checklists](https://github.com/ivan-pinatti/pre-commit-checklists),
+  [ivan-pinatti-labs/pre-commit-checklists](https://github.com/ivan-pinatti-labs/pre-commit-checklists),
   see [.pre-commit-config.yaml](.pre-commit-config.yaml)
