@@ -52,9 +52,9 @@ REPLACE_ME_PROJECT_DESCRIPTION
   the org's merge pipeline: `CodeRabbit Gate` publishes `Pin Only` and
   `Review Verified` as required status checks, `CodeRabbit Review Queue`
   nudges CodeRabbit into reviewing a dependency bot's pull request (which it
-  never does unattended), and `Bot Auto Merge` supplies the approving review
-  a pin-only dependency bump, or the repository owner's own pull request,
-  needs to enter the merge queue. See
+  never does unattended), and `Bot Auto Merge` supplies an approving review
+  so a pin-only dependency bump or the repository owner's own pull request
+  can enter the merge queue. See
   [.coderabbit.yaml](.coderabbit.yaml) and
   [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) for the full mechanics,
   including what branch protection, the merge queue ruleset, and two GitHub
@@ -113,15 +113,16 @@ review automation, and the usual community files already wired up.
    this template ships with.
 5. Set up what the merge pipeline in
    [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) needs but does not ship
-   as a file: branch protection and the merge queue ruleset on `main` (only
-   after this new repository's first pull request, the one that actually
-   adds these workflows, has merged; see that document's "The bootstrap
-   gap"), the new repository added to both the CodeRabbit and Renovate
-   GitHub App installations' selected-repository lists, the
-   `CODERABBIT_NUDGE_TOKEN` org secret's visibility extended to it, and a
-   `.github/dependabot.yml` / `.github/renovate.json5` schedule that does
-   not collide with a sibling repository's (see
-   `ivan-pinatti-labs/.github`'s `docs/BOT_SCHEDULE.md`).
+   as a file: a `REPO_OWNER_LOGIN` repository variable set to the account
+   that opens this repository's owner pull requests, branch protection and
+   the merge queue ruleset on `main` (only after this new repository's
+   first pull request, the one that actually adds these workflows, has
+   merged; see that document's "The bootstrap gap"), the new repository
+   added to both the CodeRabbit and Renovate GitHub App installations'
+   selected-repository lists, the `CODERABBIT_NUDGE_TOKEN` org secret's
+   visibility extended to it, and a `.github/dependabot.yml` /
+   `.github/renovate.json5` schedule that does not collide with a sibling
+   repository's (see `ivan-pinatti-labs/.github`'s `docs/BOT_SCHEDULE.md`).
 6. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
    is the right choice for the new project, and replace it if not.
 7. Delete this section, and the section above it, once the new project has

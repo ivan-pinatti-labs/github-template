@@ -91,11 +91,31 @@ TOOL_VERSION_LINE = re.compile(
 REV_PIN = re.compile(r"(?P<prefix>\brev:[ \t]+)" + RELEASE)
 
 # A GitHub Actions pin, always a full 40 character commit SHA in this
-# repository (Dependabot updates it that way; a trailing `# v7` comment is
-# left as ordinary text and not touched here). The negative lookahead stops
-# a 40 character prefix of a longer hex run from matching and silently
-# swallowing the character that would have made the shapes differ.
-ACTION_SHA = re.compile(r"(?P<prefix>@)[0-9a-f]{40}(?![0-9a-fA-F])")
+# repository (Dependabot updates it that way), optionally followed by a
+# trailing release comment (`# v7`, `# v7.0.1`), which Dependabot rewrites
+# on the same bump whenever the tag it resolves the SHA from changes. Both
+# have to normalize together: an earlier version of this script normalized
+# only the SHA and left the comment as ordinary text, so an ordinary bump
+# that also moved `# v7` to `# v7.0.1` read as a structural change and
+# `Pin Only` refused it. The comment is folded into the same placeholder
+# only when it is actually a release token; anything else after the SHA is
+# left alone, so a change to unrelated trailing text is still caught as
+# structural. The negative lookahead after the hex run stops a 40 character
+# prefix of a longer hex run from matching and silently swallowing the
+# character that would have made the shapes differ.
+ACTION_SHA = re.compile(
+    r"(?P<prefix>@)[0-9a-f]{40}(?![0-9a-fA-F])"
+    r"(?P<comment>[ \t]+#[ \t]*" + RELEASE + r")?"
+)
+
+
+def _normalize_action_pin(match: re.Match[str]) -> str:
+    """Collapse a `@<sha>` pin and its optional trailing release comment."""
+    normalized = f"{match.group('prefix')}<version>"
+    if match.group("comment"):
+        normalized += " # <version>"
+    return normalized
+
 
 FILE_HEADER = re.compile(r"^diff --git a/(?P<old>.+) b/(?P<new>.+)$")
 
@@ -104,7 +124,7 @@ def normalize(line: str, path: str = "") -> str:
     """Reduce a line to everything about it that a version bump may not change."""
     if path.endswith(".tool-versions"):
         return TOOL_VERSION_LINE.sub(r"\g<prefix><version>", line)
-    line = ACTION_SHA.sub(r"\g<prefix><version>", line)
+    line = ACTION_SHA.sub(_normalize_action_pin, line)
     line = REV_PIN.sub(r"\g<prefix><version>", line)
     return line
 

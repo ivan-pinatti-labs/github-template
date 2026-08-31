@@ -21,7 +21,7 @@ name: CodeRabbit Review Queue
 # reached. So the condition below is about the head commit rather than the
 # author, which catches a human pull request whose review the quota dropped
 # just as well as a bot's.
-on:
+"on":
   schedule:
     # Hourly, matching the rolling window the review quota is measured over.
     # Cron on a public repository is best effort and can run late, which is
@@ -40,12 +40,32 @@ jobs:
     name: Ask for one missing review
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # No permissions block here beyond the `contents: read` above: GITHUB_TOKEN
-    # never posts the review comment now, so it never needs `pull-requests:
-    # write`, and reading pull requests, statuses and comments needs nothing
-    # extra on a public repository either. The comment itself is posted with
-    # CODERABBIT_NUDGE_TOKEN, a separate credential scoped on its own, so this
-    # token's permissions do not need to grow to cover it.
+    # Read only: GITHUB_TOKEN never posts the review comment itself, so it
+    # never needs `pull-requests: write`. The comment is posted with
+    # CODERABBIT_NUDGE_TOKEN, a separate credential scoped on its own, so
+    # this token's permissions do not need to grow to cover it.
+    #
+    # Every scope below is still named explicitly rather than left to the
+    # workflow-level `contents: read` above, because declaring any
+    # `permissions:` block sets every unlisted scope to none rather than to
+    # this repository's own default. rsync-crypt's copy of this file left
+    # them out on the strength of being a public repository, where these
+    # GITHUB_TOKEN reads work with no scope granted at all; a repository
+    # created from this template can be private, where the same reads need
+    # the scope granted here or they fail closed. `pull-requests` for
+    # `gh pr list`; `statuses` for the `Review Verified` and `CodeRabbit`
+    # commit status reads; `checks` for the GraphQL `statusCheckRollup`
+    # query, which returns both CheckRun and StatusContext nodes; `issues`
+    # for reading the prior nudge comments this step counts before deciding
+    # whether to post another (the post itself goes through
+    # CODERABBIT_NUDGE_TOKEN, not this permission, since the comment has to
+    # look human made to CodeRabbit).
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: read
+      checks: read
+      issues: read
     steps:
       - name: Find one head with no review, and ask
         env:

@@ -61,7 +61,7 @@ name: Bot Auto Merge
 # token to a workflow a fork can trigger, which does not apply here: neither
 # job checks out the pull request, and the author condition each is gated on
 # comes from the immutable copy.
-on:
+"on":
   # zizmor: ignore[dangerous-triggers]
   #
   # Flagged by default, and the reasoning above is why it stays. The checkout
@@ -142,6 +142,15 @@ jobs:
       # `Pre-commit` is absent until pull-request.yml proves this commit.
       contents: write
       pull-requests: write
+      # For the "Wait for the published pin-only verdict" step below, which
+      # reads the `Pin Only` commit status. Declaring any `permissions:` here
+      # sets every unlisted scope to none, not to whatever this repository's
+      # own default is, so this has to be named explicitly: rsync-crypt's
+      # copy of this file left it out on the strength of being a public
+      # repository, where a `GITHUB_TOKEN` can read public data with no
+      # scope at all, but a repository created from this template can be
+      # private, where that read would otherwise fail closed.
+      statuses: read
     steps:
       - name: Check out the default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -329,15 +338,34 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+          # A repository variable, not a hardcoded literal: this repository
+          # ported the job in from ivan-pinatti-labs/rsync-crypt, where the
+          # owner login was baked in directly, which is fine for a single
+          # repository but not for a template whose files are copied into a
+          # repository some other account owns. Every repository created
+          # from this template needs its own copy of this variable set to
+          # its own owner's login; see docs/MERGE_PIPELINE.md.
+          OWNER_LOGIN: ${{ vars.REPO_OWNER_LOGIN }}
         shell: bash
         run: |
           set -euo pipefail
+          # Fail loudly rather than silently emitting an empty matrix: an
+          # unset variable is a setup mistake in a repository created from
+          # this template, not "no owner pull request to approve today",
+          # and the two read identically unless this is checked explicitly.
+          if [ -z "$OWNER_LOGIN" ]; then
+            echo "::error::REPO_OWNER_LOGIN repository variable is not set." \
+              "Set it to this repository's owning account's login before" \
+              "this job can approve anything."
+            exit 1
+          fi
+
           case "$EVENT_NAME" in
             pull_request_target)
               # Read straight off the immutable payload: cheap, and this is
               # the same trust boundary the bot job's own `if:` already
               # relies on.
-              if [ "$PR_AUTHOR" = "ivan-pinatti" ] && [ "$IS_FORK" != "true" ]; then
+              if [ "$PR_AUTHOR" = "$OWNER_LOGIN" ] && [ "$IS_FORK" != "true" ]; then
                 matrix=$(jq -nc --arg n "$PR_NUMBER" '[{pr_number: ($n | tonumber)}]')
               else
                 matrix='[]'
@@ -354,11 +382,18 @@ jobs:
               # this repository only ever has a handful open, and it costs
               # nothing extra to a pull request that is already approved:
               # the Approve step below already dedupes.
+              #
+              # gh pr list --jq takes a single filter string with no --arg
+              # of its own; binding $OWNER_LOGIN into the filter needs the
+              # standalone jq binary on the receiving end instead, so the
+              # --json output is piped to it rather than filtered inline.
+              # shellcheck disable=SC2016
               matrix=$(gh pr list --repo "$REPO" --state open --limit 100 \
                 --json number,author,isCrossRepository \
-                --jq '[.[] | select(.author.login == "ivan-pinatti"
-                                and .isCrossRepository == false)
-                        | {pr_number: .number}]')
+                | jq -c --arg owner "$OWNER_LOGIN" \
+                  '[.[] | select(.author.login == $owner
+                                  and .isCrossRepository == false)
+                          | {pr_number: .number}]')
               ;;
 
             *)
@@ -395,6 +430,18 @@ jobs:
       cancel-in-progress: false
     permissions:
       pull-requests: write
+      # contents: read for the checkout step below; checks: read and
+      # statuses: read for the GraphQL statusCheckRollup query in "Wait for
+      # every required context to be green", which returns both CheckRun
+      # and StatusContext nodes. Declaring any `permissions:` here sets
+      # every unlisted scope to none rather than to this repository's own
+      # default, so on a private repository created from this template
+      # (unlike the public repository this was ported from) these three
+      # have to be named or the query comes back empty and this job never
+      # sees a green required context.
+      contents: read
+      checks: read
+      statuses: read
     steps:
       - name: Check out the default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

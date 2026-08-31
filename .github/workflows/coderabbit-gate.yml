@@ -63,7 +63,7 @@ name: CodeRabbit Gate
 # a slow trigger overwriting a newer verdict with a stale one: whichever run
 # finishes last always reflects the current state, because it always asked
 # for it fresh rather than carrying an answer from whenever it started.
-on:
+"on":
   # zizmor: ignore[dangerous-triggers]
   #
   # Flagged by default, and the reasoning is the same as bot-auto-merge.yml's:

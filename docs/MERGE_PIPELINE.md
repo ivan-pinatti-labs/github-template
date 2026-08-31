@@ -203,9 +203,19 @@ of these files already on `main`, and the bootstrap gap closes for good.
 ## Using this pipeline from a repository created from this template
 
 Every file this document describes is part of the template and ships to a
-repository created from it. Four things do not, because none of them are
-files GitHub copies when a repository is created from a template:
+repository created from it. Five pieces of setup do not transfer
+automatically. The first four are repository or organization settings; none
+of them are files, so template creation has nothing to copy. The fifth is a
+copied bot schedule whose slot must be reassigned to avoid collisions:
 
+- **`REPO_OWNER_LOGIN`.** A repository variable, read by
+  `bot-auto-merge.yml`'s `resolve-owner` job. This repository's own copy is
+  set to `ivan-pinatti`, the personal account that opens pull requests here
+  even though the repository itself lives under the `ivan-pinatti-labs`
+  organization. A repository created from this template needs its own copy
+  set to whichever account actually opens its owner's pull requests, or
+  `resolve-owner` fails loudly (by design, rather than silently approving
+  nothing) the first time it runs.
 - **Branch protection and the merge queue ruleset.** Apply both by hand to
   the new repository's `main`, the same shape described in "The merge
   queue" above, only after the port equivalent of this repository's own
