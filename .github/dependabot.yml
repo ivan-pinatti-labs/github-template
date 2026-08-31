@@ -34,6 +34,16 @@ updates:
       day: saturday
       time: "06:00"
       timezone: "America/Toronto"
+    # Seven days, matching Renovate's minimumReleaseAge in renovate.json5.
+    # Applies to version updates only, never to Dependabot security
+    # updates, the same carve-out as vulnerabilityAlerts.minimumReleaseAge:
+    # null there. default-days is the only key used: GitHub's semver-major/
+    # minor/patch-days keys apply only to an ecosystem list that includes
+    # neither pre-commit nor github-actions, so setting them here would be
+    # configuration that silently does nothing. See ivan-pinatti-labs/.github's
+    # docs/BOT_SCHEDULE.md, "Cooling windows".
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - pre-commit
@@ -52,6 +62,11 @@ updates:
       day: saturday
       time: "06:30"
       timezone: "America/Toronto"
+    # Same seven day cooldown as the pre-commit block above, and the same
+    # default-days-only reasoning; see its comment and
+    # docs/BOT_SCHEDULE.md's "Cooling windows".
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - github-actions
