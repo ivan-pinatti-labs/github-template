@@ -215,7 +215,12 @@ copied bot schedule whose slot must be reassigned to avoid collisions:
   organization. A repository created from this template needs its own copy
   set to whichever account actually opens its owner's pull requests, or
   `resolve-owner` fails loudly (by design, rather than silently approving
-  nothing) the first time it runs.
+  nothing) the first time it runs. This is a repository variable, not a
+  file, so it is separate from the `REPLACE_ME_OWNER` text placeholder
+  replaced in the README's "Using this template" step 2 (badges,
+  `CITATION.cff`, `llms.txt`): that placeholder is this repository's own
+  GitHub org or user, which is not necessarily the same account as the one
+  set here.
 - **Branch protection and the merge queue ruleset.** Apply both by hand to
   the new repository's `main`, the same shape described in "The merge
   queue" above, only after the port equivalent of this repository's own

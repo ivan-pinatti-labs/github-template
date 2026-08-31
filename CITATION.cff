@@ -12,8 +12,8 @@ authors:
     alias: ivan-pinatti
     url: https://github.com/ivan-pinatti
 license: Apache-2.0
-repository-code: https://github.com/ivan-pinatti/REPLACE_ME_REPO_NAME
-url: https://github.com/ivan-pinatti/REPLACE_ME_REPO_NAME
+repository-code: https://github.com/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME
+url: https://github.com/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME
 keywords:
   - REPLACE_ME_KEYWORD
 version: 0.1.0

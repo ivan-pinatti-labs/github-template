@@ -1,6 +1,6 @@
 # REPLACE_ME_PROJECT_NAME
 
-![GitHub issues](https://img.shields.io/github/issues-raw/ivan-pinatti/REPLACE_ME_REPO_NAME?logo=Github&style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues-raw/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME?logo=Github&style=for-the-badge)
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/ivan-pinatti?logo=Github&style=for-the-badge)
 
 REPLACE_ME_PROJECT_DESCRIPTION
@@ -88,13 +88,18 @@ review automation, and the usual community files already wired up.
 1. Click **Use this template** at the top of this repository's GitHub
    page, and create your new repository.
 2. Clone it, then find and replace the placeholders below (search for
-   `REPLACE_ME` across the tree to find them all):
+   `REPLACE_ME` across the tree to find them all). `REPLACE_ME_OWNER` is
+   this new repository's own GitHub org or user (`REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME`
+   throughout); it is not the same value as `REPO_OWNER_LOGIN` in step 5
+   below, which can be a different account entirely:
    - [CITATION.cff](CITATION.cff): project title, abstract, repository
-     URL, and keywords.
-   - [llms.txt](llms.txt): project name, description, key files, and tech
-     stack.
-   - This README: project name, description, and the repository name
-     inside the issues badge above and the license badge further down.
+     owner and URL, and keywords.
+   - [llms.txt](llms.txt): project name, description, key files, tech
+     stack, and the repository owner and name in the canonical
+     repository line.
+   - This README: project name, description, and the repository owner
+     and name inside the issues badge above and the license badge
+     further down.
 3. Update the `rev:` pin in [.pre-commit-config.yaml](.pre-commit-config.yaml)
    to the latest release tag of `pre-commit-checklists`, then run:
 
@@ -130,7 +135,7 @@ review automation, and the usual community files already wired up.
 
 ## License
 
-[![license](https://img.shields.io/github/license/ivan-pinatti/REPLACE_ME_REPO_NAME?style=plastic)](LICENSE.md)
+[![license](https://img.shields.io/github/license/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME?style=plastic)](LICENSE.md)
 
 See [LICENSE.md](LICENSE.md) for full details.
 
