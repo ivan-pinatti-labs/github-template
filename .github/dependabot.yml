@@ -42,6 +42,21 @@ updates:
     # neither pre-commit nor github-actions, so setting them here would be
     # configuration that silently does nothing. See ivan-pinatti-labs/.github's
     # docs/BOT_SCHEDULE.md, "Cooling windows".
+    #
+    # A weekly schedule stacks on this window rather than overlapping it, the
+    # same arithmetic that moved Renovate to a daily schedule: a release
+    # published just after Saturday's run is still too new at the next one, so
+    # a version update can take up to 14 days rather than the 7 the cooldown
+    # names. That is accepted here rather than fixed by going daily, and the
+    # reason it is tolerable for Dependabot but was not for Renovate is that
+    # the cost is staleness, not exposure. Longer is the safe direction for a
+    # supply chain window, and Dependabot security updates bypass cooldown and
+    # schedule entirely, so nothing urgent is waiting behind Saturday.
+    #
+    # What the day buys in exchange is the slot allocation in BOT_SCHEDULE.md,
+    # which Renovate does not need because it is not day-scoped. If that trade
+    # is ever revisited, `interval: daily` is the lever, and note that
+    # Dependabot's "daily" means weekdays only.
     cooldown:
       default-days: 7
     labels:

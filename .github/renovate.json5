@@ -36,8 +36,10 @@
   // daily keeps the schedule's own period short enough that it cannot add
   // more than a day on top of that floor.
   //
-  // This does not collide with dependabot.yml's Saturday slot in this
-  // repository, and is not scoped to a day the way Dependabot is: a
+  // Running daily does mean this can land in the same hour as
+  // dependabot.yml's Saturday 06:00 and 06:30 slots, and that is fine
+  // rather than a collision to design around, because it is not scoped to a
+  // day the way Dependabot is: a
   // Renovate pin-only bump resolves `Review Verified` through
   // `coderabbit-review-verdict.py`'s bot lane without CodeRabbit ever being
   // asked, so it consumes no review quota. The day-spreading recorded in

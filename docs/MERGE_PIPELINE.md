@@ -235,15 +235,19 @@ copied bot schedule whose slot must be reassigned to avoid collisions:
   `repository_selection: selected`. A new repository needs adding to both
   installations' repository lists before either app does anything on it at
   all; until then, `CodeRabbit` posts no status and Renovate opens nothing.
-- **A `.github/dependabot.yml` / `.github/renovate.json5` schedule that does
-  not collide with a sibling repository's.** This repository's own slot
-  (Saturday, `.github/dependabot.yml` and `.github/renovate.json5`) is
+- **A `.github/dependabot.yml` slot that does not collide with a sibling
+  repository's.** This repository's own slot (Saturday 06:00 and 06:30) is
   recorded in `ivan-pinatti-labs/.github`'s `docs/BOT_SCHEDULE.md`, together
-  with every other repository's slot. A repository created from this
-  template inherits the Saturday slot verbatim; if it stays active
-  alongside this one, pick a different day or hour for it and record that
-  choice in `BOT_SCHEDULE.md`, the same way this repository's own slot is
-  recorded there.
+  with every other repository's. A repository created from this template
+  inherits Saturday verbatim; if it stays active alongside this one, pick a
+  free hour, check it against every row of that table rather than against a
+  day at a glance, and record the choice there.
+
+  Only Dependabot needs a slot. `.github/renovate.json5` runs daily in every
+  repository and is deliberately not day-scoped, because a Renovate pin-only
+  bump resolves `Review Verified` through the bot lane without consuming a
+  CodeRabbit review, so it does not compete for the quota that table exists
+  to protect. Leave it daily rather than giving it a day of its own.
 
 ---
 

@@ -125,9 +125,10 @@ review automation, and the usual community files already wired up.
    merged; see that document's "The bootstrap gap"), the new repository
    added to both the CodeRabbit and Renovate GitHub App installations'
    selected-repository lists, the `CODERABBIT_NUDGE_TOKEN` org secret's
-   visibility extended to it, and a `.github/dependabot.yml` /
-   `.github/renovate.json5` schedule that does not collide with a sibling
-   repository's (see `ivan-pinatti-labs/.github`'s `docs/BOT_SCHEDULE.md`).
+   visibility extended to it, and a `.github/dependabot.yml` slot that does
+   not collide with a sibling repository's (see `ivan-pinatti-labs/.github`'s
+   `docs/BOT_SCHEDULE.md`). Renovate needs no slot: it runs daily everywhere
+   and consumes no CodeRabbit review quota.
 6. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
    is the right choice for the new project, and replace it if not.
 7. Delete this section, and the section above it, once the new project has
