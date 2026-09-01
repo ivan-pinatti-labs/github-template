@@ -2,7 +2,7 @@
 
 > REPLACE_ME_ONE_LINE_DESCRIPTION
 > Apache License 2.0. Author: Ivan Pinatti (https://github.com/ivan-pinatti).
-> Canonical repository: https://github.com/ivan-pinatti/REPLACE_ME_REPO_NAME
+> Canonical repository: https://github.com/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME
 
 ## What it does
 

@@ -29,26 +29,24 @@
 
   timezone: "America/Toronto",
 
-  // Saturday, matching dependabot.yml's own slot in this repository (see
-  // the reasoning there and in ivan-pinatti-labs/.github's
-  // docs/BOT_SCHEDULE.md): CodeRabbit's review quota is shared across the
-  // whole GitHub App installation, so keeping every one of this repo's bots
-  // inside the same reserved day avoids competing with
-  // ivan-pinatti-labs/rsync-crypt's Monday window or ivan-pinatti-labs/.github's
-  // Tuesday one.
+  // Daily, not Saturday. A weekly schedule stacks on top of
+  // minimumReleaseAge's 7 day floor below rather than overlapping it: a
+  // release that misses its weekly slot by a day waits a full extra week,
+  // pushing the effective floor to 14 days when 7 was intended. Checking
+  // daily keeps the schedule's own period short enough that it cannot add
+  // more than a day on top of that floor.
   //
-  // A single day, not the daily "before 7am" ivan-pinatti-labs/rsync-crypt
-  // and ivan-pinatti-labs/.github both use. Weekly does reopen the gap
-  // their comments warn about: a release that misses this Saturday slot by
-  // a day waits a full extra week behind minimumReleaseAge's 7 day floor
-  // below, up to 14 days total instead of 7. Accepted here because this
-  // repository's whole Renovate-managed surface is two asdf tool pins
-  // (pre-commit, github-cli); the daily check earns its keep on a larger
-  // dependency surface more than it does on this one, and staying inside a
-  // single reserved day keeps the schedule easy to reason about against
-  // BOT_SCHEDULE.md. Revisit this if a repo created from this template
-  // grows a materially larger Renovate surface.
-  schedule: ["before 7am on Saturday"],
+  // Running daily does mean this can land in the same hour as
+  // dependabot.yml's Saturday 06:00 and 06:30 slots, and that is fine
+  // rather than a collision to design around, because it is not scoped to a
+  // day the way Dependabot is: a
+  // Renovate pin-only bump resolves `Review Verified` through
+  // `coderabbit-review-verdict.py`'s bot lane without CodeRabbit ever being
+  // asked, so it consumes no review quota. The day-spreading recorded in
+  // ivan-pinatti-labs/.github's docs/BOT_SCHEDULE.md is a Dependabot
+  // concern only; see that document's "Cooling windows" and "Renovate runs
+  // daily everywhere" sections for the full reasoning.
+  schedule: ["before 7am"],
 
   labels: ["dependencies"],
   commitMessagePrefix: "chore:",
