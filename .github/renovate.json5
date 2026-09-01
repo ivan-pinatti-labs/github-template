@@ -31,18 +31,20 @@
 
   // Daily, not Saturday. A weekly schedule stacks on top of
   // minimumReleaseAge's 7 day floor below rather than overlapping it: a
-  // release that misses its weekly slot by a day waits a full extra week,
-  // pushing the effective floor to 14 days when 7 was intended. Checking
-  // daily keeps the schedule's own period short enough that it cannot add
-  // more than a day on top of that floor.
+  // release that misses its weekly slot by a day waits a full extra week, so
+  // the oldest a package could sit before merging was up to 14 days even
+  // though 7 was the intended floor. The floor itself never moved:
+  // minimumReleaseAge is seven days either way, and what a weekly window
+  // stretched was the worst case, not the minimum. Checking daily keeps the
+  // schedule's own period short enough that it cannot add more than a day on
+  // top of that floor.
   //
   // Running daily does mean this can land in the same hour as
   // dependabot.yml's Saturday 06:00 and 06:30 slots, and that is fine
   // rather than a collision to design around, because it is not scoped to a
-  // day the way Dependabot is: a
-  // Renovate pin-only bump resolves `Review Verified` through
-  // `coderabbit-review-verdict.py`'s bot lane without CodeRabbit ever being
-  // asked, so it consumes no review quota. The day-spreading recorded in
+  // day the way Dependabot is: a Renovate pin-only bump resolves
+  // `Review Verified` through `coderabbit-review-verdict.py`'s bot lane
+  // without CodeRabbit ever being asked, so it consumes no review quota. The day-spreading recorded in
   // ivan-pinatti-labs/.github's docs/BOT_SCHEDULE.md is a Dependabot
   // concern only; see that document's "Cooling windows" and "Renovate runs
   // daily everywhere" sections for the full reasoning.
