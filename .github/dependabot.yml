@@ -5,21 +5,19 @@ version: 2
 # handles the asdf tool versions in .tool-versions, which Dependabot cannot
 # parse. See renovate.json5 in this directory.
 #
-# Scheduled Saturday, not the Monday ivan-pinatti-labs/rsync-crypt uses or
-# the Tuesday ivan-pinatti-labs/.github uses: see that org's
-# docs/BOT_SCHEDULE.md, which reserves Saturday as a spare day for exactly
-# this kind of addition. CodeRabbit's review quota is shared across the
-# whole GitHub App installation, not handed out per repository, so two
-# repositories' bots opening pull requests in the same hour would queue
-# behind each other and both look stuck for no visible reason; the day
-# reservation is what avoids that.
+# Daily, matching Renovate and every other repository in this organization.
+# Note that Dependabot's "daily" means weekdays only, not all seven days.
 #
-# A repo created from this template inherits this same Saturday slot. If
-# more than one such repo is ever active in this organization at once, pick
-# a different day or hour for the new one and record it in
-# ivan-pinatti-labs/.github's docs/BOT_SCHEDULE.md, the same way this repo's
-# own slot is recorded there, so two template-derived repos do not end up
-# colliding with each other.
+# This was Saturday until 2026-09-02, one weekday out of a per-repository
+# table in ivan-pinatti-labs/.github's docs/BOT_SCHEDULE.md, so that two
+# repositories' bots would not open pull requests in the same hour and queue
+# behind each other for CodeRabbit's installation-wide review quota. The
+# premise was wrong: a pin-only Dependabot bump resolves `Review Verified`
+# through the bot lane and never asks CodeRabbit for an opinion, exactly as a
+# Renovate bump does, so the table was rationing something Dependabot never
+# consumed. A repository created from this template therefore needs no slot
+# picked for it, which also removes the collision two template-derived
+# repositories used to inherit.
 updates:
   # Covers .pre-commit-config.yaml at the repo root. Dependabot's
   # pre-commit ecosystem only ever reads a file literally named
@@ -30,8 +28,7 @@ updates:
   - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:
-      interval: weekly
-      day: saturday
+      interval: daily
       time: "06:00"
       timezone: "America/Toronto"
     # Seven days, matching Renovate's minimumReleaseAge in renovate.json5.
@@ -41,22 +38,22 @@ updates:
     # minor/patch-days keys apply only to an ecosystem list that includes
     # neither pre-commit nor github-actions, so setting them here would be
     # configuration that silently does nothing. See ivan-pinatti-labs/.github's
-    # docs/BOT_SCHEDULE.md, "Cooling windows".
+    # README.md, "Both bots wait seven days".
     #
-    # A weekly schedule stacks on this window rather than overlapping it, the
-    # same arithmetic that moved Renovate to a daily schedule: a release
-    # published just after Saturday's run is still too new at the next one, so
-    # a version update can take up to 14 days rather than the 7 the cooldown
-    # names. That is accepted here rather than fixed by going daily, and the
-    # reason it is tolerable for Dependabot but was not for Renovate is that
-    # the cost is staleness, not exposure. Longer is the safe direction for a
-    # supply chain window, and Dependabot security updates bypass cooldown and
-    # schedule entirely, so nothing urgent is waiting behind Saturday.
+    # A weekly schedule stacked on this window rather than overlapping it: a
+    # release published just after the weekly run was still too new at the
+    # next one, so a version update could take up to 14 days rather than the 7
+    # the cooldown names. That was tolerated here on the grounds that the cost
+    # is staleness rather than exposure, that longer is the safe direction for
+    # a supply chain window, and that Dependabot security updates bypass both
+    # cooldown and schedule so nothing urgent was waiting behind it.
     #
-    # What the day buys in exchange is the slot allocation in BOT_SCHEDULE.md,
-    # which Renovate does not need because it is not day-scoped. If that trade
-    # is ever revisited, `interval: daily` is the lever, and note that
-    # Dependabot's "daily" means weekdays only.
+    # That argument still holds on its own terms, and it is not why the
+    # schedule changed. What it was trading against turned out to be worth
+    # nothing: the weekday bought a slot in a table protecting a review quota
+    # Dependabot never spent. With nothing on the other side of the trade,
+    # a floor that is 7 days and predictable beats one that is 7 to 14
+    # depending on the day of the week a release lands.
     cooldown:
       default-days: 7
     labels:
@@ -73,13 +70,12 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: weekly
-      day: saturday
-      time: "06:30"
+      interval: daily
+      time: "06:00"
       timezone: "America/Toronto"
     # Same seven day cooldown as the pre-commit block above, and the same
     # default-days-only reasoning; see its comment and
-    # docs/BOT_SCHEDULE.md's "Cooling windows".
+    # README.md's "Both bots wait seven days".
     cooldown:
       default-days: 7
     labels:

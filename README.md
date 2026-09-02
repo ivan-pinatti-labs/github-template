@@ -1,9 +1,17 @@
-# REPLACE_ME_PROJECT_NAME
+# github-template
 
-![GitHub issues](https://img.shields.io/github/issues-raw/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME?logo=Github&style=for-the-badge)
-![GitHub Sponsors](https://img.shields.io/github/sponsors/ivan-pinatti?logo=Github&style=for-the-badge)
+[![License](https://img.shields.io/github/license/ivan-pinatti-labs/github-template?logo=Github&style=for-the-badge)](LICENSE.md)
+[![GitHub issues](https://img.shields.io/github/issues-raw/ivan-pinatti-labs/github-template?logo=Github&style=for-the-badge)](https://github.com/ivan-pinatti-labs/github-template/issues)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/ivan-pinatti?logo=Github&style=for-the-badge)](https://github.com/sponsors/ivan-pinatti)
+[![GitHub Repo stars](https://img.shields.io/github/stars/ivan-pinatti-labs/github-template?logo=Github&style=for-the-badge)](https://github.com/ivan-pinatti-labs/github-template)
+[![GitHub forks](https://img.shields.io/github/forks/ivan-pinatti-labs/github-template?logo=Github&style=for-the-badge)](https://github.com/ivan-pinatti-labs/github-template/forks)
+[![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/ivan-pinatti-labs/github-template?utm_source=oss&utm_medium=github&utm_campaign=ivan-pinatti-labs%2Fgithub-template&labelColor=171717&color=FF570A&label=CodeRabbit+Reviews&style=for-the-badge)](https://coderabbit.ai)
 
-REPLACE_ME_PROJECT_DESCRIPTION
+A GitHub template repository: the starting point for a new project, with
+pre-commit, dependency automation, review automation, the
+`ivan-pinatti-labs` merge pipeline, and the usual community files already
+wired up. Click **Use this template** to create a repository from it, then
+follow [Using this template](#using-this-template) below.
 
 ## Requirements
 
@@ -87,20 +95,27 @@ review automation, and the usual community files already wired up.
 
 1. Click **Use this template** at the top of this repository's GitHub
    page, and create your new repository.
-2. Clone it, then find and replace the placeholders below (search for
-   `REPLACE_ME` across the tree to find them all). `REPLACE_ME_OWNER` is
-   this new repository's own GitHub org or user (`REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME`
-   throughout); it is not the same value as `REPO_OWNER_LOGIN` in step 5
-   below, which can be a different account entirely:
+2. Clone it, then put the starter README in place of this one, which
+   describes the template rather than your project:
+
+   ```shell
+   mv docs/STARTER_README.md README.md
+   ```
+
+3. Find and replace the placeholders (search for `REPLACE_ME` across the
+   tree to find them all). `REPLACE_ME_OWNER` is this new repository's own
+   GitHub org or user (`REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME` throughout);
+   it is not the same value as `REPO_OWNER_LOGIN` in step 6 below, which can
+   be a different account entirely:
+   - `README.md`, the one you just moved into place: project name,
+     description, and the repository owner and name throughout its badge
+     row.
    - [CITATION.cff](CITATION.cff): project title, abstract, repository
      owner and URL, and keywords.
    - [llms.txt](llms.txt): project name, description, key files, tech
      stack, and the repository owner and name in the canonical
      repository line.
-   - This README: project name, description, and the repository owner
-     and name inside the issues badge above and the license badge
-     further down.
-3. Update the `rev:` pin in [.pre-commit-config.yaml](.pre-commit-config.yaml)
+4. Update the `rev:` pin in [.pre-commit-config.yaml](.pre-commit-config.yaml)
    to the latest release tag of `pre-commit-checklists`, then run:
 
    ```shell
@@ -108,7 +123,7 @@ review automation, and the usual community files already wired up.
    pre-commit run --all-files
    ```
 
-4. Add a language-specific pre-commit checklist id, and a matching
+5. Add a language-specific pre-commit checklist id, and a matching
    Dependabot ecosystem in [.github/dependabot.yml](.github/dependabot.yml),
    once you know what the project is written in. Widen, or drop, the
    `enabledManagers` restriction in
@@ -116,7 +131,7 @@ review automation, and the usual community files already wired up.
    as shipped it is scoped to the asdf tool pins in `.tool-versions`
    only, on the assumption that Dependabot already owns everything else
    this template ships with.
-5. Set up what the merge pipeline in
+6. Set up what the merge pipeline in
    [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) needs but does not ship
    as a file: a `REPO_OWNER_LOGIN` repository variable set to the account
    that opens this repository's owner pull requests, branch protection and
@@ -124,19 +139,16 @@ review automation, and the usual community files already wired up.
    first pull request, the one that actually adds these workflows, has
    merged; see that document's "The bootstrap gap"), the new repository
    added to both the CodeRabbit and Renovate GitHub App installations'
-   selected-repository lists, the `CODERABBIT_NUDGE_TOKEN` org secret's
-   visibility extended to it, and a `.github/dependabot.yml` slot that does
-   not collide with a sibling repository's (see `ivan-pinatti-labs/.github`'s
-   `docs/BOT_SCHEDULE.md`). Renovate needs no slot: it runs daily everywhere
-   and consumes no CodeRabbit review quota.
-6. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
+   selected-repository lists, and the `CODERABBIT_NUDGE_TOKEN` org secret's
+   visibility extended to it. Neither bot needs a schedule picked for it:
+   both run daily in every repository, and a pin-only bump from either
+   consumes no CodeRabbit review quota. See
+   [ivan-pinatti-labs/.github](https://github.com/ivan-pinatti-labs/.github)
+   under "Dependency policy".
+7. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
    is the right choice for the new project, and replace it if not.
-7. Delete this section, and the section above it, once the new project has
-   its own README content to replace them with.
 
 ## License
-
-[![license](https://img.shields.io/github/license/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME?style=plastic)](LICENSE.md)
 
 See [LICENSE.md](LICENSE.md) for full details.
 

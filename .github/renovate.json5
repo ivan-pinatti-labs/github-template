@@ -44,10 +44,10 @@
   // rather than a collision to design around, because it is not scoped to a
   // day the way Dependabot is: a Renovate pin-only bump resolves
   // `Review Verified` through `coderabbit-review-verdict.py`'s bot lane
-  // without CodeRabbit ever being asked, so it consumes no review quota. The day-spreading recorded in
-  // ivan-pinatti-labs/.github's docs/BOT_SCHEDULE.md is a Dependabot
-  // concern only; see that document's "Cooling windows" and "Renovate runs
-  // daily everywhere" sections for the full reasoning.
+  // without CodeRabbit ever being asked, so it consumes no review quota.
+  // Dependabot is on the same daily schedule for the same reason, since the
+  // bot lane applies to its pin-only bumps too; see
+  // ivan-pinatti-labs/.github's README.md under "Dependency policy".
   schedule: ["before 7am"],
 
   labels: ["dependencies"],
