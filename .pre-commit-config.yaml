@@ -57,6 +57,13 @@ repos:
       - id: checklist-markdown
         types: [markdown]
         stages: [pre-commit]
+        # docs/STARTER_README.md is a template rather than a document, and
+        # its links are correct only after it is moved. Its badge URLs carry
+        # REPLACE_ME placeholders that resolve to nothing, and its LICENSE.md
+        # link is relative to the repository root it gets moved to, not to
+        # docs/ where it sits. Link-checking it in place would demand it be
+        # wrong for its actual purpose to pass here.
+        exclude: ^docs/STARTER_README\.md$
 
       # Validates JSON syntax and formats with Prettier. types_or: [json,
       # json5], not a plain types: [json]: .github/renovate.json5 is typed
