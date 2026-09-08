@@ -1,23 +1,33 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
 
-  // Dependabot handles GitHub Actions and pre-commit hook revs inside
-  // .pre-commit-config.yaml, see dependabot.yml. Renovate handles the one
-  // thing Dependabot's pre-commit ecosystem cannot: the asdf tool versions
-  // pinned in .tool-versions (pre-commit, github-cli). There is no
+  // Renovate is this template's active dependency bot: it covers every pin
+  // surface this repository has, not just the asdf tool versions pinned in
+  // .tool-versions (pre-commit, github-cli) it originally shipped scoped to,
+  // but also the pre-commit-checklists rev: pin in .pre-commit-config.yaml
+  // and every commit-SHA action pin under .github/workflows/. Dependabot's
+  // own config for those same two ecosystems (dependabot.yml) is still
+  // present, deliberately, but disabled (open-pull-requests-limit: 0 on
+  // both its blocks): this repository is a GitHub template, so a project
+  // created from it may prefer Dependabot for either ecosystem, and
+  // dependabot.yml stays fully configured so that is a one-line change
+  // there rather than reconstructing config from scratch. See README.md's
+  // "What you get" and "Using this template" step 5. There is no
   // .env.example or annotated version string here for a custom regex
   // manager to track, unlike ivan-pinatti-labs/rsync-crypt's copy of this
-  // file, so enabledManagers below is narrower than that repo's.
+  // file, so enabledManagers below has no regex manager the way that repo's
+  // does.
   //
-  // enabledManagers below is scoped to asdf only, not left as a generic
-  // catch-all the way this template's config was before this file was
-  // aligned with the org's merge pipeline (docs/MERGE_PIPELINE.md):
-  // Dependabot already owns github-actions and pre-commit here, and this
-  // repo has nothing else for Renovate to manage. A repo created from this
-  // template that grows real dependencies beyond .tool-versions (npm, pip,
-  // a Dockerfile, a Terraform module registry, ...) needs to widen
-  // enabledManagers, or drop it entirely to fall back to config:recommended's
-  // own defaults, once it has something else for Renovate to watch.
+  // enabledManagers below is an explicit list of exactly those three
+  // managers, not left as a generic catch-all the way this template's
+  // config was before this file was first aligned with the org's merge
+  // pipeline (docs/MERGE_PIPELINE.md): this repo has nothing else for
+  // Renovate to manage yet. A repo created from this template that grows
+  // real dependencies beyond these three surfaces (npm, pip, a Dockerfile, a
+  // Terraform module registry, ...) needs to widen enabledManagers, or drop
+  // it entirely to fall back to config:recommended's own defaults, once it
+  // has something else for Renovate to watch; see README.md's "Using this
+  // template" step 5.
   extends: ["config:recommended"],
 
   // Kept on despite the standing, never-resolving tracking issue it opens.
@@ -39,14 +49,9 @@
   // schedule's own period short enough that it cannot add more than a day on
   // top of that floor.
   //
-  // Running daily does mean this can land in the same hour as
-  // dependabot.yml's Saturday 06:00 and 06:30 slots, and that is fine
-  // rather than a collision to design around, because it is not scoped to a
-  // day the way Dependabot is: a Renovate pin-only bump resolves
-  // `Review Verified` through `coderabbit-review-verdict.py`'s bot lane
-  // without CodeRabbit ever being asked, so it consumes no review quota.
-  // Dependabot is on the same daily schedule for the same reason, since the
-  // bot lane applies to its pin-only bumps too; see
+  // A pin-only bump resolves `Review Verified` through
+  // `coderabbit-review-verdict.py`'s bot lane without CodeRabbit ever being
+  // asked, so a daily schedule consumes no extra review quota; see
   // ivan-pinatti-labs/.github's README.md under "Dependency policy".
   schedule: ["before 7am"],
 
@@ -63,10 +68,24 @@
   // person rather than merging on the strength of a default nobody chose.
   automerge: false,
 
-  // Dependabot owns github-actions and pre-commit hook revs; disabling
-  // everything but asdf here avoids duplicate pull requests for the same
-  // update.
-  enabledManagers: ["asdf"],
+  // The three pin surfaces this repository actually has. asdf covers
+  // .tool-versions; github-actions covers every uses: SHA pin under
+  // .github/workflows/; pre-commit covers .pre-commit-config.yaml's rev:.
+  // github-actions and pre-commit are also configured, disabled, in
+  // dependabot.yml; see the file header above. Dropping either manager
+  // from this list is the other half of switching that ecosystem back to
+  // Dependabot, alongside raising its open-pull-requests-limit there.
+  enabledManagers: ["asdf", "github-actions", "pre-commit"],
+
+  // Renovate's pre-commit manager ships disabled by its own default even
+  // when named in enabledManagers above (confirmed with
+  // `renovate --platform=local --dry-run=extract`, which listed the manager
+  // as enabled but extracted zero dependencies from
+  // .pre-commit-config.yaml until this block was added). github-actions
+  // needs no equivalent block: it ships enabled by default.
+  "pre-commit": {
+    enabled: true,
+  },
 
   // A cooling window before an update is offered at all, mirroring
   // ivan-pinatti-labs/rsync-crypt's reasoning: `Pin Only` proves a diff
@@ -113,10 +132,11 @@
     // pin position, checked line by line, before the label alone can do
     // anything; see docs/MERGE_PIPELINE.md.
     //
-    // patch and minor only. Either asdf tool here (pre-commit, github-cli)
-    // could in principle offer a major, which is exactly the case that
-    // needs a person to check nothing else in this repository's tooling
-    // assumes the old major's behavior.
+    // patch and minor only, across every enabled manager: an asdf tool, a
+    // pinned action, or a pre-commit hook rev could each in principle offer
+    // a major, which is exactly the case that needs a person to check
+    // nothing else in this repository's tooling assumes the old major's
+    // behavior.
     {
       matchUpdateTypes: ["patch", "minor"],
       automerge: true,
@@ -127,6 +147,22 @@
       groupName: "asdf tool versions",
       groupSlug: "asdf-tools",
       labels: ["dependencies", "tooling"],
+    },
+
+    // One grouped pull request per ecosystem, the same shape Dependabot's
+    // own (disabled) groups in dependabot.yml produce, each with a
+    // matching label added on top of the plain "dependencies" label above.
+    {
+      matchManagers: ["github-actions"],
+      groupName: "github actions",
+      groupSlug: "github-actions",
+      labels: ["dependencies", "github-actions"],
+    },
+    {
+      matchManagers: ["pre-commit"],
+      groupName: "pre-commit hooks",
+      groupSlug: "pre-commit-hooks",
+      labels: ["dependencies", "pre-commit"],
     },
   ],
 }
