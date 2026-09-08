@@ -22,6 +22,7 @@
     "editorconfig",
     "errexit",
     "esac",
+    "gomod",
     "gsub",
     "llms",
     "markdownlint",

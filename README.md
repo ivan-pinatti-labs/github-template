@@ -50,12 +50,17 @@ follow [Using this template](#using-this-template) below.
   produces) computes the next version from Conventional Commit prefixes,
   tags it, and creates a GitHub release. See
   [.github/workflows/new-tag-and-release.yml](.github/workflows/new-tag-and-release.yml).
-- **Dependabot**, watching `.pre-commit-config.yaml` and every
-  `.github/workflows/*.yml` action pin. See
+- **Renovate**, this template's active dependency bot: the asdf tool pins
+  in `.tool-versions`, `.pre-commit-config.yaml`'s `rev:` pin, and every
+  `.github/workflows/*.yml` action pin, one grouped pull request per
+  ecosystem. See [.github/renovate.json5](.github/renovate.json5).
+- **Dependabot**, present but disabled
+  (`open-pull-requests-limit: 0`) for the same `pre-commit` and
+  `github-actions` ecosystems Renovate already watches. It ships fully
+  configured, not stripped down, so switching either ecosystem back to
+  Dependabot instead of Renovate is a one-line change (that limit, back to
+  `5`) rather than reconstructing config from scratch. See
   [.github/dependabot.yml](.github/dependabot.yml).
-- **Renovate**, scoped to the asdf tool pins in `.tool-versions`, the one
-  pin surface Dependabot cannot read. See
-  [.github/renovate.json5](.github/renovate.json5).
 - **CodeRabbit**, reviewing pull requests once they leave draft state, plus
   the org's merge pipeline: `CodeRabbit Gate` publishes `Pin Only` and
   `Review Verified` as required status checks, `CodeRabbit Review Queue`
@@ -79,13 +84,16 @@ follow [Using this template](#using-this-template) below.
 
 This repository is meant to be generic and language-agnostic, so it does
 not bake in any one project type's tooling: no language-specific linter
-configuration, no build system, no test runner, no `dependabot.yml`
-ecosystem beyond `pre-commit` and `github-actions`. Once you know what
-the new project is written in, add the pieces that fit it, for example a
-language-specific pre-commit checklist id (`checklist-dev-python`,
-`checklist-dev-shell`, and so on, see
+configuration, no build system, no test runner, no Renovate manager beyond
+`asdf`, `github-actions` and `pre-commit`, and no `dependabot.yml`
+ecosystem beyond `pre-commit` and `github-actions` (both present but
+disabled; see "What you get" above). Once you know what the new project is
+written in, add the pieces that fit it, for example a language-specific
+pre-commit checklist id (`checklist-dev-python`, `checklist-dev-shell`, and
+so on, see
 [pre-commit-checklists' hook catalogue](https://github.com/ivan-pinatti-labs/pre-commit-checklists/blob/main/docs/hook-catalogue.md))
-and a matching Dependabot ecosystem block.
+and a matching Renovate manager or Dependabot ecosystem block, whichever
+bot you would rather run for it (see step 5 below).
 
 ## Using this template
 
@@ -123,14 +131,42 @@ review automation, and the usual community files already wired up.
    pre-commit run --all-files
    ```
 
-5. Add a language-specific pre-commit checklist id, and a matching
-   Dependabot ecosystem in [.github/dependabot.yml](.github/dependabot.yml),
-   once you know what the project is written in. Widen, or drop, the
-   `enabledManagers` restriction in
-   [.github/renovate.json5](.github/renovate.json5) at the same time:
-   as shipped it is scoped to the asdf tool pins in `.tool-versions`
-   only, on the assumption that Dependabot already owns everything else
-   this template ships with.
+5. Add a language-specific pre-commit checklist id once you know what the
+   project is written in, and decide which bot should watch its
+   dependencies. Renovate is this template's active default; extend
+   [.github/renovate.json5](.github/renovate.json5) to watch the new
+   ecosystem too. As shipped, `enabledManagers` is an explicit list of
+   exactly the three pin surfaces this template ships with (`asdf`,
+   `github-actions`, `pre-commit`). Renovate has a
+   [native manager](https://docs.renovatebot.com/modules/manager/) for most
+   ecosystems (`npm`, `pip_requirements`, `bundler`, `gomod`,
+   `dockerfile`, and so on): add its name to `enabledManagers` and Renovate
+   picks up the matching manifest with no further configuration. For an
+   ecosystem Renovate has no native manager for, widen `enabledManagers` to
+   include `regex` instead and add a
+   [custom manager](https://docs.renovatebot.com/modules/manager/regex/)
+   with a `matchStrings` pattern that finds the version string, the shape
+   `ivan-pinatti-labs/rsync-crypt`'s copy of this file uses for its
+   `.env.example` pin. Either way, add a matching `packageRules` entry
+   grouping the new ecosystem's updates behind its own label, the same
+   shape as the `asdf`, `github-actions` and `pre-commit` groups already
+   there, so a single grouped pull request per ecosystem is preserved and
+   `bot-auto-merge.yml`'s automerge grant does not start merging unrelated
+   bumps together. Dropping `enabledManagers` entirely, to fall back to
+   `config:recommended`'s own defaults, is the other option, once enough
+   ecosystems are in play that maintaining an explicit list stops being
+   worth it.
+
+   Dependabot is the other option, for a new ecosystem or for either one
+   this template already ships: [.github/dependabot.yml](.github/dependabot.yml)
+   carries a commented `REPLACE_ME_ECOSYSTEM` block at the bottom to copy
+   for a new ecosystem, and its existing `pre-commit` and `github-actions`
+   blocks are already fully configured, just disabled
+   (`open-pull-requests-limit: 0`). To run Dependabot instead of Renovate
+   for either of those two, raise that block's `open-pull-requests-limit`
+   back to `5` and drop the matching manager out of Renovate's
+   `enabledManagers` at the same time: running both bots against the same
+   ecosystem opens duplicate pull requests for the same bump.
 6. Set up what the merge pipeline in
    [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) needs but does not ship
    as a file: a `REPO_OWNER_LOGIN` repository variable set to the account

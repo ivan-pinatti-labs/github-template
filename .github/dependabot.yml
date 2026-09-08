@@ -1,9 +1,23 @@
 ---
 version: 2
 
-# Dependabot handles GitHub Actions and pre-commit hook revs; Renovate
-# handles the asdf tool versions in .tool-versions, which Dependabot cannot
-# parse. See renovate.json5 in this directory.
+# Present but disabled: every block below carries open-pull-requests-limit: 0,
+# which is GitHub's own documented, supported way to turn version updates off
+# for an ecosystem without deleting its definition (security updates are a
+# separate switch, `enable-beta-ecosystems`/Dependabot Alerts, not this file,
+# and are unaffected by the limit). Renovate is this template's active
+# default for both ecosystems below (github-actions, pre-commit) instead; see
+# renovate.json5's github-actions and pre-commit managers. This file stays
+# fully configured, not stripped down, so switching a project created from
+# this template back to Dependabot for either ecosystem is a one line change,
+# open-pull-requests-limit back to 5, not reconstructing this config from
+# scratch. Every comment below, including the schedule and cooldown
+# reasoning, is still the reasoning that would apply the moment either limit
+# goes back up.
+#
+# Dependabot handles GitHub Actions and pre-commit hook revs when enabled;
+# Renovate handles the asdf tool versions in .tool-versions, which Dependabot
+# cannot parse. See renovate.json5 in this directory.
 #
 # Daily, matching Renovate and every other repository in this organization.
 # Note that Dependabot's "daily" means weekdays only, not all seven days.
@@ -62,7 +76,11 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    open-pull-requests-limit: 5
+    # 0: disabled. Renovate's pre-commit manager (renovate.json5) is this
+    # template's active default for this ecosystem instead. Raise this back
+    # to 5 to run Dependabot here again; nothing else in this block needs to
+    # change to do that.
+    open-pull-requests-limit: 0
 
   # Covers every uses: line under .github/workflows/. Pin actions to a full
   # commit SHA with a trailing "# vX.Y.Z" comment (see the workflows in
@@ -84,7 +102,11 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    open-pull-requests-limit: 5
+    # 0: disabled. Renovate's github-actions manager (renovate.json5) is
+    # this template's active default for this ecosystem instead. Raise this
+    # back to 5 to run Dependabot here again; nothing else in this block
+    # needs to change to do that.
+    open-pull-requests-limit: 0
     groups:
       github-actions:
         patterns:
