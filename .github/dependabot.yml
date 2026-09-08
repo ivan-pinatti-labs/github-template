@@ -3,17 +3,24 @@ version: 2
 
 # Present but disabled: every block below carries open-pull-requests-limit: 0,
 # which is GitHub's own documented, supported way to turn version updates off
-# for an ecosystem without deleting its definition (security updates are a
-# separate switch, `enable-beta-ecosystems`/Dependabot Alerts, not this file,
-# and are unaffected by the limit). Renovate is this template's active
-# default for both ecosystems below (github-actions, pre-commit) instead; see
-# renovate.json5's github-actions and pre-commit managers. This file stays
-# fully configured, not stripped down, so switching a project created from
-# this template back to Dependabot for either ecosystem is a one line change,
-# open-pull-requests-limit back to 5, not reconstructing this config from
-# scratch. Every comment below, including the schedule and cooldown
-# reasoning, is still the reasoning that would apply the moment either limit
-# goes back up.
+# for an ecosystem without deleting its definition. That limit governs
+# version updates only; it does not touch Dependabot's alert driven security
+# updates, a separate repository setting (Settings, Code security,
+# "Dependabot security updates") independent of this file, so a security
+# pull request can still appear here even while every block below reads 0.
+# Renovate is this template's active default for both ecosystems below
+# (github-actions, pre-commit) instead; see renovate.json5's github-actions
+# and pre-commit managers. This file stays fully configured, not stripped
+# down, so a project created from this template starts from real config
+# rather than a placeholder, but switching an ecosystem back to Dependabot
+# takes two edits, not one: raise that ecosystem's open-pull-requests-limit
+# back to 5 here, and remove that same ecosystem's manager from
+# renovate.json5's enabledManagers (or otherwise narrow it out). Doing only
+# the first leaves both bots watching the same files, which opens duplicate,
+# competing pull requests for the same pin the moment a version moves.
+# Every comment below, including the schedule and cooldown reasoning, is
+# still the reasoning that would apply the moment a block's limit goes back
+# up.
 #
 # Dependabot handles GitHub Actions and pre-commit hook revs when enabled;
 # Renovate handles the asdf tool versions in .tool-versions, which Dependabot
@@ -77,9 +84,11 @@ updates:
       prefix: "chore"
       include: "scope"
     # 0: disabled. Renovate's pre-commit manager (renovate.json5) is this
-    # template's active default for this ecosystem instead. Raise this back
-    # to 5 to run Dependabot here again; nothing else in this block needs to
-    # change to do that.
+    # template's active default for this ecosystem instead. Raising this
+    # back to 5 is one of two edits needed to run Dependabot here again; the
+    # other is removing "pre-commit" from renovate.json5's enabledManagers,
+    # or both bots open competing pull requests for the same rev: pin. See
+    # the file header above.
     open-pull-requests-limit: 0
 
   # Covers every uses: line under .github/workflows/. Pin actions to a full
@@ -103,9 +112,11 @@ updates:
       prefix: "chore"
       include: "scope"
     # 0: disabled. Renovate's github-actions manager (renovate.json5) is
-    # this template's active default for this ecosystem instead. Raise this
-    # back to 5 to run Dependabot here again; nothing else in this block
-    # needs to change to do that.
+    # this template's active default for this ecosystem instead. Raising
+    # this back to 5 is one of two edits needed to run Dependabot here
+    # again; the other is removing "github-actions" from renovate.json5's
+    # enabledManagers, or both bots open competing pull requests for the
+    # same action pin. See the file header above.
     open-pull-requests-limit: 0
     groups:
       github-actions:

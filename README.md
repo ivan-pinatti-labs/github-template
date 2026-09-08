@@ -56,11 +56,15 @@ follow [Using this template](#using-this-template) below.
   ecosystem. See [.github/renovate.json5](.github/renovate.json5).
 - **Dependabot**, present but disabled
   (`open-pull-requests-limit: 0`) for the same `pre-commit` and
-  `github-actions` ecosystems Renovate already watches. It ships fully
+  `github-actions` ecosystems Renovate already watches. That limit disables
+  version updates only, not Dependabot's alert driven security updates,
+  a separate repository setting unaffected by this file. It ships fully
   configured, not stripped down, so switching either ecosystem back to
-  Dependabot instead of Renovate is a one-line change (that limit, back to
-  `5`) rather than reconstructing config from scratch. See
-  [.github/dependabot.yml](.github/dependabot.yml).
+  Dependabot instead of Renovate takes two edits, not one: raise that
+  ecosystem's limit back to `5`, and remove the matching manager from
+  [.github/renovate.json5](.github/renovate.json5)'s `enabledManagers`, or
+  both bots watch the same files and open competing pull requests for the
+  same pin. See [.github/dependabot.yml](.github/dependabot.yml).
 - **CodeRabbit**, reviewing pull requests once they leave draft state, plus
   the org's merge pipeline: `CodeRabbit Gate` publishes `Pin Only` and
   `Review Verified` as required status checks, `CodeRabbit Review Queue`
