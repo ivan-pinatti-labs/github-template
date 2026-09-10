@@ -164,5 +164,27 @@
       groupSlug: "pre-commit-hooks",
       labels: ["dependencies", "pre-commit"],
     },
+
+    // The github-actions manager extracts more than uses: pins by default:
+    // pull-request.yml's python-version: "3.12" passed to
+    // actions/setup-python's with: (depType uses-with) is a shape
+    // rsync-crypt's own PR #82 proved live there, proposing 3.13 to 3.14
+    // with no way to ever merge it. Dependabot's github-actions ecosystem
+    // never watched this shape either, it bumped uses: pins only, and
+    // scripts/assert-pin-only-diff.py's REV_PIN and ACTION_SHA patterns do
+    // not match a with: input, so Pin Only would refuse a diff like this
+    // and route it to a person every single time upstream Python cuts a
+    // release, forever, since the shape never changes. Disabled here so
+    // this template, and every repository created from it, stops
+    // generating a pull request that can never pass its own required
+    // check. matchDepTypes also covers github-runner (a literal runs-on:
+    // value) for the same reason, even though nothing here happens to use
+    // one today; pre-commit-checklists, pre-commit-checklists-demo and
+    // rsync-crypt all carry the identical rule for the identical reason.
+    {
+      matchManagers: ["github-actions"],
+      matchDepTypes: ["github-runner", "uses-with"],
+      enabled: false,
+    },
   ],
 }
