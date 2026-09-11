@@ -205,7 +205,8 @@ def _normalize_bare_action_version(match: re.Match[str]) -> str:
 
 FILE_HEADER = re.compile(r"^diff --git a/(?P<old>.+) b/(?P<new>.+)$")
 
-# A YAML block scalar opener: `key: |`, `key: >`, with the optional
+# A YAML block scalar opener: `key: |`, `key: >`, or a bare sequence item
+# whose own value is the scalar (`- |`, `- >-`), with the optional
 # chomping (`-`/`+`) and explicit indentation (a digit) modifiers the spec
 # allows, in either order (`|2-` and `|-2` are both valid), and an optional
 # trailing comment. Everything indented more than a line matching this,
@@ -219,9 +220,14 @@ FILE_HEADER = re.compile(r"^diff --git a/(?P<old>.+) b/(?P<new>.+)$")
 # check reading `Pin Only` then approves. A follow-up review found the
 # first version of this pattern too narrow to catch every real opener: it
 # missed `|2-` (digit before chomping) and a trailing `# comment`, either
-# of which would have left a real block scalar unrecognized as one.
+# of which would have left a real block scalar unrecognized as one. A
+# later review found it still missed a standalone sequence-item scalar
+# header, `- |` with no `key:` in front at all, since the pattern required
+# a colon before the scalar indicator; confirmed exploitable the same way,
+# a `uses:` line nested under one read as ordinary YAML structure instead
+# of a block scalar's literal content.
 BLOCK_SCALAR_OPENER = re.compile(
-    r":\s*[|>](?:[+-][1-9]?|[1-9][+-]?)?(?:[ \t]+#.*)?\s*$"
+    r"(?::|^[ \t]*-)\s*[|>](?:[+-][1-9]?|[1-9][+-]?)?(?:[ \t]+#.*)?\s*$"
 )
 
 
