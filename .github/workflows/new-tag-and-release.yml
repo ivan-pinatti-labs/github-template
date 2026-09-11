@@ -67,19 +67,23 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: main
 
-      # ncipollo/release-action rather than a gh release create script
-      # step, matching this project's other repositories. zizmor reports
-      # superfluous-actions here, since gh could do the same job without a
-      # third party action; that is a style note rather than a security
-      # finding, and keeping one maintained action is preferred over a hand
-      # rolled script this repository would then own, including its notes
-      # escaping and its draft and prerelease handling.
+      # gh release create rather than ncipollo/release-action: gh ships
+      # preinstalled on the runner and is maintained by GitHub itself, so
+      # using it drops a third party action from this workflow's trust
+      # boundary entirely rather than merely suppressing zizmor's
+      # superfluous-actions finding on it. Nothing this job does with
+      # ncipollo (tag, name, body, generated notes) needs a capability gh
+      # lacks; rsync-crypt's own copy of this workflow keeps
+      # ncipollo/release-action instead, because it sets allowUpdates,
+      # which gh has no equivalent for.
       - name: Create release
         if: steps.tag_version.outputs.new_tag != ''
-        # zizmor: ignore[superfluous-actions] see the comment above.
-        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
-          generateReleaseNotes: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag_version.outputs.new_tag }}
+          NOTES: ${{ steps.tag_version.outputs.changelog }}
+        run: |
+          gh release create "$TAG" \
+            --title "Release $TAG" \
+            --notes "$NOTES" \
+            --generate-notes
