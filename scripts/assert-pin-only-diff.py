@@ -103,8 +103,17 @@ REV_PIN = re.compile(r"(?P<prefix>\brev:[ \t]+)" + RELEASE)
 # structural. The negative lookahead after the hex run stops a 40 character
 # prefix of a longer hex run from matching and silently swallowing the
 # character that would have made the shapes differ.
+#
+# Case-insensitive (`[0-9a-fA-F]`, not `[0-9a-f]`): GitHub resolves a
+# `uses:` SHA the same way regardless of case, so an uppercase or
+# mixed-case SHA is just as real a pin as a lowercase one, and matching
+# only lowercase left a gap a CodeRabbit review of BARE_ACTION_VERSION
+# below found: an uppercase SHA on a first-time pin's new side fell
+# through ACTION_SHA entirely and was accepted by BARE_ACTION_VERSION's
+# generic RELEASE grammar instead, which does not check that a
+# first-time pin's target is SHA-shaped at all.
 ACTION_SHA = re.compile(
-    r"(?P<prefix>@)[0-9a-f]{40}(?![0-9a-fA-F])"
+    r"(?P<prefix>@)[0-9a-fA-F]{40}(?![0-9a-fA-F])"
     r"(?P<comment>[ \t]+#[ \t]*" + RELEASE + r")?"
 )
 
