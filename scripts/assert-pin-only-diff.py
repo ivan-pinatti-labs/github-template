@@ -207,16 +207,22 @@ FILE_HEADER = re.compile(r"^diff --git a/(?P<old>.+) b/(?P<new>.+)$")
 
 # A YAML block scalar opener: `key: |`, `key: >`, with the optional
 # chomping (`-`/`+`) and explicit indentation (a digit) modifiers the spec
-# allows. Everything indented more than a line matching this, until a line
-# at or below its own indentation appears, is that block scalar's literal
-# content, not further YAML structure: a `run: |` step body is the shape
-# that matters here, since its content can coincidentally read exactly
-# like a `uses:` field. A CodeRabbit review found and confirmed this: an
-# indented `uses: owner/action@<sha> # v7` inside a run: | block matched
-# ACTION_SHA and BARE_ACTION_VERSION alike, treating shell text as if it
-# were a real GitHub Actions step, which a required check reading `Pin
-# Only` then approves.
-BLOCK_SCALAR_OPENER = re.compile(r":\s*[|>][+-]?[1-9]?\s*$")
+# allows, in either order (`|2-` and `|-2` are both valid), and an optional
+# trailing comment. Everything indented more than a line matching this,
+# until a line at or below its own indentation appears, is that block
+# scalar's literal content, not further YAML structure: a `run: |` step
+# body is the shape that matters here, since its content can coincidentally
+# read exactly like a `uses:` field. A CodeRabbit review found and
+# confirmed this: an indented `uses: owner/action@<sha> # v7` inside a
+# run: | block matched ACTION_SHA and BARE_ACTION_VERSION alike, treating
+# shell text as if it were a real GitHub Actions step, which a required
+# check reading `Pin Only` then approves. A follow-up review found the
+# first version of this pattern too narrow to catch every real opener: it
+# missed `|2-` (digit before chomping) and a trailing `# comment`, either
+# of which would have left a real block scalar unrecognized as one.
+BLOCK_SCALAR_OPENER = re.compile(
+    r":\s*[|>](?:[+-][1-9]?|[1-9][+-]?)?(?:[ \t]+#.*)?\s*$"
+)
 
 
 def _line_indent(line: str) -> int:
@@ -237,6 +243,24 @@ def _in_block_scalar(context: list[str], indent: int) -> bool:
     cannot be told apart from one that was never open, and refusing the
     line as a candidate pin either way is the fail closed direction, the
     same one every other shape in this file takes when it cannot be sure.
+
+    A CodeRabbit review named the residual gap in this precisely: the
+    first shallower line found is trusted as the boundary even when it is
+    itself ordinary scalar content one level further out, rather than the
+    real opener sitting deeper in the scan, so a `uses:` line nested under
+    something like an `if` inside a `run: |` block, both indented past the
+    block's own floor, is not caught. Scanning past a shallower non-opener
+    line to keep looking, rather than trusting it as decisive, would close
+    that gap, but was tried and reverted: it also requires reaching the
+    file's own top level (indentation zero) before a real diff's limited
+    context ever earns a confident "not inside one", and no ordinary `gh
+    pr diff` output carries that much. Verified against
+    docker-torrent-box-with-vpn's own #178, which never contains the
+    change's enclosing indentation chain down to indentation zero: the
+    deeper version refused it outright, the same result a compromised
+    bot's diff should get, not a clean one. This narrower version is the
+    one actually deployed; the nested case above is an accepted,
+    documented gap rather than a silently unfixed one.
     """
     for seen in reversed(context):
         if not seen.strip():
@@ -264,13 +288,21 @@ def parse(diff: str) -> tuple[dict[str, tuple[Counter, Counter]], list[str]]:
     structural: list[str] = []
     path = None
     in_hunk = False
-    # The lines of each side of this file seen so far in the diff, in file
-    # order: what a block scalar check has to work with, since the diff
-    # never carries the whole file. Kept separate because a hunk can add or
-    # remove a block scalar's own opening line, which changes whether a
-    # later line on just one side is inside one. Reset on every file header,
-    # not every hunk, since hunks in one file's diff always appear in
-    # ascending line order and a block scalar can span more than one hunk.
+    # The lines of each side of this hunk seen so far, in file order: what a
+    # block scalar check has to work with, since the diff never carries the
+    # whole file. Kept separate because a hunk can add or remove a block
+    # scalar's own opening line, which changes whether a later line on just
+    # one side is inside one. Reset on every hunk, not only every file
+    # header: a second CodeRabbit-class finding on this exact mechanism
+    # showed that carrying context across a hunk boundary lets a later
+    # hunk's indentation check resolve against an earlier hunk's unrelated
+    # content, across whatever the diff omitted between them, which can
+    # land on a line that happens to sit shallower without actually being
+    # the real enclosing structure. A block scalar spanning more than one
+    # hunk loses the benefit of this check's memory across that gap, and a
+    # line in it without enough of its own hunk's context to resolve on its
+    # own falls back to the same conservative default every other
+    # under-informed line here does.
     old_context: list[str] = []
     new_context: list[str] = []
 
@@ -289,6 +321,8 @@ def parse(diff: str) -> tuple[dict[str, tuple[Counter, Counter]], list[str]]:
 
         if line.startswith("@@"):
             in_hunk = True
+            old_context = []
+            new_context = []
             continue
 
         # Everything between a file header and its first hunk is preamble:
