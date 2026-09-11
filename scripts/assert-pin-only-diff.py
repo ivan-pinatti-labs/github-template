@@ -162,11 +162,34 @@ def _normalize_action_pin(match: re.Match[str]) -> str:
 # ACTION_SHA has already replaced that run with `<version>` by the time
 # this pattern runs, and `<version>` does not start with a digit or a bare
 # `v`.
+#
+# The version is its own capture group, `bare_version`, rather than folded
+# unnamed into the match, because a third CodeRabbit-class finding (found
+# by extending their own test on rsync-crypt's and pre-commit-checklists'
+# copies of this pattern, not reported directly here) showed RELEASE alone
+# is still too permissive: `_normalize_bare_action_version` below refuses a
+# 40 character match outright, real hex or not, because 40 characters is
+# the shape ACTION_SHA exists to own exclusively. Without that check, a
+# non-hex 40 character token, `0` followed by 39 `z`s for instance, never
+# matches ACTION_SHA (not hex) and was accepted here instead, since
+# nothing about this pattern's own grammar checked that the "version"
+# replacing a first-time pin's bare tag was ever a real SHA at all, only
+# that it was RELEASE-shaped. A real first-time pin's target is always
+# exactly a 40 character SHA, ACTION_SHA's exclusive domain, so anything
+# that length reaching this pattern instead is already suspect, and
+# refusing it outright costs nothing: a length that long never occurs in a
+# genuine bare release tag either.
 BARE_ACTION_VERSION = re.compile(
     r"(?P<action_prefix>^(?:[ \t]*-[ \t]+)?[ \t]*uses:[ \t]+[\w.-]+/[\w./-]+)@"
-    + RELEASE
-    + r"$"
+    r"(?P<bare_version>" + RELEASE + r")$"
 )
+
+
+def _normalize_bare_action_version(match: re.Match[str]) -> str:
+    if len(match.group("bare_version")) == 40:
+        return match.group(0)
+    return f"{match.group('action_prefix')}@<version> # <version>"
+
 
 FILE_HEADER = re.compile(r"^diff --git a/(?P<old>.+) b/(?P<new>.+)$")
 
@@ -176,7 +199,7 @@ def normalize(line: str, path: str = "") -> str:
     if path.endswith(".tool-versions"):
         return TOOL_VERSION_LINE.sub(r"\g<prefix><version>", line)
     line = ACTION_SHA.sub(_normalize_action_pin, line)
-    line = BARE_ACTION_VERSION.sub(r"\g<action_prefix>@<version> # <version>", line)
+    line = BARE_ACTION_VERSION.sub(_normalize_bare_action_version, line)
     line = REV_PIN.sub(r"\g<prefix><version>", line)
     return line
 
