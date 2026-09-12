@@ -1,3 +1,4 @@
+---
 cff-version: 1.2.0
 message: >
   If you use software created from this template, consider citing it using
@@ -8,9 +9,10 @@ abstract: >
   REPLACE_ME_ABSTRACT: a short description of what the project created from
   this template does.
 authors:
-  - name: Ivan Pinatti
+  - given-names: Ivan
+    family-names: Pinatti
     alias: ivan-pinatti
-    url: https://github.com/ivan-pinatti
+    website: https://github.com/ivan-pinatti
 license: Apache-2.0
 repository-code: https://github.com/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME
 url: https://github.com/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME

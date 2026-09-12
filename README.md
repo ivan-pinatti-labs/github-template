@@ -123,7 +123,13 @@ review automation, and the usual community files already wired up.
      description, and the repository owner and name throughout its badge
      row.
    - [CITATION.cff](CITATION.cff): project title, abstract, repository
-     owner and URL, and keywords.
+     owner and URL, keywords, and the release date. Once that file carries
+     no placeholders, uncomment the `cffconvert-validate` hook at the
+     bottom of
+     [.pre-commit-config.yaml](.pre-commit-config.yaml): it validates the
+     file against the Citation File Format schema, which the yamllint hook
+     above it cannot do, and it cannot run while `REPLACE_ME_DATE` is still
+     there.
    - [llms.txt](llms.txt): project name, description, key files, tech
      stack, and the repository owner and name in the canonical
      repository line.

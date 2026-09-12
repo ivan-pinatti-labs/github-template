@@ -81,6 +81,9 @@ repos:
         types: [yaml]
         stages: [pre-commit]
 
+      # CITATION.cff needs its own hook, below, and cannot be reached from
+      # this id. See that hook for why.
+
       # Validates TOML syntax.
       - id: checklist-toml
         types: [toml]
@@ -142,3 +145,58 @@ repos:
       - id: checklist-dev-python
         files: ^scripts/.*\.py$
         stages: [pre-commit]
+
+  # CITATION.cff is the one file here that no checklist reaches. It is YAML,
+  # but `identify` tags it only `text`, since the tag comes from the extension
+  # and `.cff` is not one it knows. Widening checklist-yaml's `types:`
+  # selector above cannot help: check-yaml and yamllint both carry
+  # `types: [file, yaml]` in their own manifests, which pre-commit ANDs with
+  # whatever a consumer asks for, so the file is dropped by the hook rather
+  # than by the id's selector. Overriding `types:` on the hook itself is the
+  # way in, and that can only be done where the hook is declared, which is
+  # here.
+  #
+  # Worth covering because GitHub reads this file for the "Cite this
+  # repository" widget, where a file it cannot use produces no error anyone
+  # would see.
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+        name: yamllint (CITATION.cff)
+        files: ^CITATION\.cff$
+        types: [text]
+        stages: [pre-commit]
+
+  # The other half of that check, commented out because it cannot pass here.
+  #
+  # yamllint above proves the file parses; it knows nothing about the Citation
+  # File Format schema, and that gap is not theoretical. The author block in
+  # this template's own CITATION.cff used to read `name:` and `url:`, and
+  # `url` is not a key CFF has at all (the person and entity definitions both
+  # spell it `website`), so every repository created from this template
+  # started life with a citation file no tool could use. It parsed as YAML
+  # perfectly well the whole time.
+  #
+  # cffconvert is the reference implementation's own validator and would have
+  # caught it, but it cannot run against this file while the REPLACE_ME
+  # placeholders are still in place: `date-released: "REPLACE_ME_DATE"` is not
+  # a date, and the schema says so. Filling a real date in to satisfy it would
+  # remove the placeholder from the `REPLACE_ME` search the README tells you
+  # to run, which is worse than the check being absent.
+  #
+  # So: once the placeholders in CITATION.cff are filled in, uncomment this.
+  # pass_filenames is false with the path written out because cffconvert takes
+  # its input through `-i` and rejects a bare positional argument; `files:`
+  # still scopes it to that one file.
+  #
+  # - repo: local
+  #   hooks:
+  #     - id: cffconvert-validate
+  #       name: cffconvert --validate (CITATION.cff)
+  #       language: python
+  #       additional_dependencies: ["cffconvert==2.0.0"]
+  #       entry: cffconvert --validate -i CITATION.cff
+  #       files: ^CITATION\.cff$
+  #       pass_filenames: false
+  #       stages: [pre-commit]
