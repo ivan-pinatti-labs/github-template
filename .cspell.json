@@ -43,6 +43,8 @@
     "tostring",
     "unreviewed",
     "unsanitised",
+    "worktree",
+    "worktrees",
     "yamllint",
     "zizmor"
   ]

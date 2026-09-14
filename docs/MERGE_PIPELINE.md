@@ -161,7 +161,7 @@ honestly," for the full reasoning; it applies here unchanged.
 
 `coderabbit-review-queue.yml`'s hourly nudge (`29 * * * *`) is what actually
 gets CodeRabbit to look at a bot's pull request in the first place, since
-CodeRabbit never reviews one on its own; see rsync-crypt's `CLAUDE.md`,
+CodeRabbit never reviews one on its own; see rsync-crypt's `AGENTS.md`,
 "CodeRabbit silently ignores `@coderabbitai review` from a bot account," for
 why that comment has to come from a human account, or from
 `CODERABBIT_NUDGE_TOKEN` rather than the default `GITHUB_TOKEN`, and for
