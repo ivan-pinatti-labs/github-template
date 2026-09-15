@@ -20,6 +20,10 @@ the project created from this template has its own conventions.
    pre-commit install
    ```
 
+   Or work inside the development container, which already carries
+   pre-commit and every other tool the hooks need; see
+   [.devcontainer/README.md](.devcontainer/README.md).
+
 3. Make your change, and run the checks locally before opening a pull
    request:
 

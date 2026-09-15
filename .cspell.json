@@ -43,6 +43,7 @@
     "tostring",
     "unreviewed",
     "unsanitised",
+    "userns",
     "worktree",
     "worktrees",
     "yamllint",

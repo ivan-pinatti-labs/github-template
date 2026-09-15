@@ -15,6 +15,10 @@ follow [Using this template](#using-this-template) below.
 
 ## Requirements
 
+The [development container](.devcontainer/README.md) carries everything
+below, so with it the host needs only rootless Podman and the one time setup
+that README describes. Without it:
+
 - [`pre-commit`](https://pre-commit.com/#install) and `git`.
 - **Docker** (or a Docker CLI compatible runtime) on `PATH`.
   `checklist-github-actions` in
@@ -76,6 +80,10 @@ follow [Using this template](#using-this-template) below.
   [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) for the full mechanics,
   including what branch protection, the merge queue ruleset, and two GitHub
   App installations expect from a repository created from this template.
+- **A development container** that runs every hook, `gh` and `git` over
+  SSH with rootless Podman, on the organization's shared base image. It
+  installs exactly what `.tool-versions` pins. See
+  [.devcontainer/README.md](.devcontainer/README.md).
 - **Issue and pull request templates**, a stale-issue policy, a
   `CODEOWNERS` file, and a `FUNDING.yml`, all under
   [.github/](.github/).
@@ -177,6 +185,10 @@ review automation, and the usual community files already wired up.
    back to `5` and drop the matching manager out of Renovate's
    `enabledManagers` at the same time: running both bots against the same
    ecosystem opens duplicate pull requests for the same bump.
+
+   Pin every tool the project needs in `.tool-versions`: the development
+   container installs exactly those, and a tool asdf cannot install goes in
+   [.devcontainer/Dockerfile](.devcontainer/Dockerfile) instead.
 6. Set up what the merge pipeline in
    [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) needs but does not ship
    as a file: a `REPO_OWNER_LOGIN` repository variable set to the account
