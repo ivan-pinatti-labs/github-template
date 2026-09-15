@@ -113,3 +113,10 @@ does not pin is missing in the container rather than borrowed from somewhere
 else, which is how a missing pin shows up. A tool added to `.tool-versions`
 is installed the next time the container is rebuilt; anything asdf cannot
 install goes in `.devcontainer/Dockerfile`.
+
+The asdf plugins that install those tools are pinned too, in
+`.devcontainer/asdf-plugins`: each from its repository URL, at a commit
+someone has read. A plugin is a set of scripts that `asdf install` runs, so a
+new tool needs its plugin added there (the build fails without it), and
+Renovate proposes new plugin commits as pull requests for a person to review,
+never merged automatically.

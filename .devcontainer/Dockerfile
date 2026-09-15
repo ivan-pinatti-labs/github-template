@@ -14,6 +14,18 @@ FROM ${BASE_IMAGE}
 
 USER 1000:1000
 
+# Every asdf plugin, from its repository URL at the commit
+# .devcontainer/asdf-plugins pins, never by short name from asdf's plugin
+# index. A tool in .tool-versions with no pinned plugin has no plugin at all
+# here, so `asdf install` below fails instead of fetching one unreviewed.
+COPY --chown=1000:1000 .devcontainer/asdf-plugins /tmp/tool-versions/asdf-plugins
+RUN while read -r name url _ commit; do \
+    case "${name}" in '' | '#'*) continue ;; esac; \
+    asdf plugin add "${name}" "${url}" \
+      && git -C "${ASDF_DATA_DIR}/plugins/${name}" checkout --quiet "${commit}" \
+      || exit 1; \
+  done < /tmp/tool-versions/asdf-plugins
+
 # Every tool .tool-versions pins, installed from that file. It is copied to a
 # scratch directory and removed afterwards rather than left in the home
 # directory, where asdf would treat it as a global fallback: a tool this
@@ -21,8 +33,7 @@ USER 1000:1000
 # supplied.
 COPY --chown=1000:1000 .tool-versions /tmp/tool-versions/.tool-versions
 WORKDIR /tmp/tool-versions
-RUN while read -r tool _; do asdf plugin add "${tool}"; done < .tool-versions \
-  && asdf install \
+RUN asdf install \
   && rm -rf /tmp/tool-versions
 
 WORKDIR /workspace

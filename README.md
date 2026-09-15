@@ -186,7 +186,9 @@ review automation, and the usual community files already wired up.
    `enabledManagers` at the same time: running both bots against the same
    ecosystem opens duplicate pull requests for the same bump.
 
-   Pin every tool the project needs in `.tool-versions`: the development
+   Pin every tool the project needs in `.tool-versions`, and its asdf plugin,
+   at a commit you have read, in
+   [.devcontainer/asdf-plugins](.devcontainer/asdf-plugins): the development
    container installs exactly those, and a tool asdf cannot install goes in
    [.devcontainer/Dockerfile](.devcontainer/Dockerfile) instead.
 6. Set up what the merge pipeline in
