@@ -68,11 +68,20 @@
   // .tool-versions; github-actions covers every uses: SHA pin under
   // .github/workflows/; pre-commit covers .pre-commit-config.yaml's rev:;
   // custom.regex covers .devcontainer/asdf-plugins through customManagers
-  // below. github-actions and pre-commit are also configured, disabled, in
-  // dependabot.yml; see the file header above. Dropping either of those two
-  // managers from this list is the other half of switching that ecosystem
-  // back to Dependabot, alongside raising its open-pull-requests-limit there.
-  enabledManagers: ["asdf", "github-actions", "pre-commit", "custom.regex"],
+  // below; dockerfile covers the base image digest the development
+  // container pins, scoped to that one file by the packageRules entry
+  // further down. github-actions and pre-commit are also configured,
+  // disabled, in dependabot.yml; see the file header above. Dropping either
+  // of those two managers from this list is the other half of switching that
+  // ecosystem back to Dependabot, alongside raising its
+  // open-pull-requests-limit there.
+  enabledManagers: [
+    "asdf",
+    "github-actions",
+    "pre-commit",
+    "custom.regex",
+    "dockerfile",
+  ],
 
   // Renovate's pre-commit manager ships disabled by its own default even
   // when named in enabledManagers above (confirmed with
@@ -159,6 +168,23 @@
       groupName: "asdf tool versions",
       groupSlug: "asdf-tools",
       labels: ["dependencies", "tooling"],
+    },
+    // The development container's base image, pinned by digest in
+    // .devcontainer/Dockerfile. matchFileNames is what keeps the dockerfile
+    // manager to that one file: any other Dockerfile this repository grows
+    // later stays unwatched until someone widens this deliberately.
+    //
+    // Not automerged. scripts/assert-pin-only-diff.py does not grade
+    // .devcontainer/Dockerfile as a pin surface, so `Pin Only` routes the
+    // pull request to a person anyway; saying it here means the policy does
+    // not depend on that script's path list staying as it is.
+    {
+      matchManagers: ["dockerfile"],
+      matchFileNames: [".devcontainer/Dockerfile"],
+      groupName: "development container base image",
+      groupSlug: "devcontainer-base",
+      labels: ["dependencies", "tooling"],
+      automerge: false,
     },
 
     // An asdf plugin is code: `asdf install` runs its scripts to download and
