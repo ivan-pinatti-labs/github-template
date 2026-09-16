@@ -39,6 +39,7 @@
     "pycache",
     "renovate",
     "rollup",
+    "SARIF",
     "shellcheck",
     "shfmt",
     "tonumber",
