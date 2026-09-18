@@ -174,7 +174,9 @@
     // manager to that one file: any other Dockerfile this repository grows
     // later stays unwatched until someone widens this deliberately.
     //
-    // Merged unattended, like every other pin here. This is the
+    // Merged unattended. A digest update matches none of the automerge
+    // grants above, which cover patch and minor only, so this rule grants
+    // it itself; asdf plugin commits below still wait for a person. This is the
     // organization's own image, built by ivan-pinatti-labs/devcontainer-images,
     // and the quality gate lives there rather than in each consumer: that
     // repository ages its own upstream inputs through a seven day
