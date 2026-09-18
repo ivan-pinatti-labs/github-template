@@ -174,19 +174,24 @@
     // manager to that one file: any other Dockerfile this repository grows
     // later stays unwatched until someone widens this deliberately.
     //
-    // Not automerged. scripts/assert-pin-only-diff.py does not grade
-    // .devcontainer/Dockerfile as a pin surface, so `Pin Only` routes the
-    // pull request to a person anyway; saying it here means the policy does
-    // not depend on that script's path list staying as it is.
+    // Merged unattended, like every other pin here. This is the
+    // organization's own image, built by ivan-pinatti-labs/devcontainer-images,
+    // and the quality gate lives there rather than in each consumer: that
+    // repository ages its own upstream inputs through a seven day
+    // minimumReleaseAge, sends Ubuntu minor and major moves and asdf bumps to a
+    // person, and only publishes from a reviewed merge to main. A digest
+    // arriving here has therefore already passed that gate, and `Pin Only`
+    // grades the `ARG BASE_IMAGE=<image>@sha256:<digest>` line (IMAGE_DIGEST in
+    // scripts/assert-pin-only-diff.py), so the ordinary bot lane approves it.
     // GHCR returns no release timestamp for a digest, so under Renovate's
     // default minimumReleaseAgeBehaviour (timestamp-required) the seven day
     // window above would hold every base image bump forever and, with
     // internalChecksFilter strict, never open the pull request at all.
     // Measured with a dry-run=full: "digest update of
     // ghcr.io/ivan-pinatti-labs/devcontainer-base has no releaseTimestamp to
-    // age against". timestamp-optional lets the update be offered; the review
-    // stands in for the age window, exactly as it does for the asdf plugin
-    // commits above.
+    // age against". timestamp-optional lets the update be offered; the seven
+    // day window is applied upstream instead, in devcontainer-images, where the
+    // image's own inputs are aged before anything is published.
     {
       matchManagers: ["dockerfile"],
       matchFileNames: [".devcontainer/Dockerfile"],
@@ -194,7 +199,8 @@
       groupSlug: "devcontainer-base",
       labels: ["dependencies", "tooling"],
       minimumReleaseAgeBehaviour: "timestamp-optional",
-      automerge: false,
+      automerge: true,
+      addLabels: ["automerge"],
     },
 
     // An asdf plugin is code: `asdf install` runs its scripts to download and
