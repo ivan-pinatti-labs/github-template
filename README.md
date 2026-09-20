@@ -54,10 +54,10 @@ that README describes. Without it:
   produces) computes the next version from Conventional Commit prefixes,
   tags it, and creates a GitHub release. See
   [.github/workflows/new-tag-and-release.yml](.github/workflows/new-tag-and-release.yml).
-- **Renovate**, this template's active dependency bot: the asdf tool pins
-  in `.tool-versions`, `.pre-commit-config.yaml`'s `rev:` pin, and every
-  `.github/workflows/*.yml` action pin, one grouped pull request per
-  ecosystem. See [.github/renovate.json5](.github/renovate.json5).
+- **Renovate**, this template's active dependency bot:
+  `.pre-commit-config.yaml`'s `rev:` pin, every `.github/workflows/*.yml`
+  action pin, and the development container's base image digest, one
+  grouped pull request per ecosystem. See [.github/renovate.json5](.github/renovate.json5).
 - **Dependabot**, present but disabled
   (`open-pull-requests-limit: 0`) for the same `pre-commit` and
   `github-actions` ecosystems Renovate already watches. That limit disables
@@ -81,8 +81,10 @@ that README describes. Without it:
   including what branch protection, the merge queue ruleset, and two GitHub
   App installations expect from a repository created from this template.
 - **A development container** that runs every hook, `gh` and `git` over
-  SSH with rootless Podman, on the organization's shared base image. It
-  installs exactly what `.tool-versions` pins. See
+  SSH with rootless Podman, on the organization's shared base image. Tools
+  come from signed package repositories, and the Claude Code and Codex CLIs
+  come with the base image. `make shell` opens a shell in it from an
+  ordinary terminal, with no editor involved. See
   [.devcontainer/README.md](.devcontainer/README.md).
 - **Issue and pull request templates**, a stale-issue policy, a
   `CODEOWNERS` file, and a `FUNDING.yml`, all under
@@ -97,7 +99,7 @@ that README describes. Without it:
 This repository is meant to be generic and language-agnostic, so it does
 not bake in any one project type's tooling: no language-specific linter
 configuration, no build system, no test runner, no Renovate manager beyond
-`asdf`, `github-actions` and `pre-commit`, and no `dependabot.yml`
+`github-actions`, `pre-commit` and `dockerfile`, and no `dependabot.yml`
 ecosystem beyond `pre-commit` and `github-actions` (both present but
 disabled; see "What you get" above). Once you know what the new project is
 written in, add the pieces that fit it, for example a language-specific
@@ -154,8 +156,8 @@ review automation, and the usual community files already wired up.
    dependencies. Renovate is this template's active default; extend
    [.github/renovate.json5](.github/renovate.json5) to watch the new
    ecosystem too. As shipped, `enabledManagers` is an explicit list of
-   exactly the three pin surfaces this template ships with (`asdf`,
-   `github-actions`, `pre-commit`). Renovate has a
+   exactly the pin surfaces this template ships with (`github-actions`,
+   `pre-commit`, `dockerfile`). Renovate has a
    [native manager](https://docs.renovatebot.com/modules/manager/) for most
    ecosystems (`npm`, `pip_requirements`, `bundler`, `gomod`,
    `dockerfile`, and so on): add its name to `enabledManagers` and Renovate
@@ -167,8 +169,8 @@ review automation, and the usual community files already wired up.
    `ivan-pinatti-labs/rsync-crypt`'s copy of this file uses for its
    `.env.example` pin. Either way, add a matching `packageRules` entry
    grouping the new ecosystem's updates behind its own label, the same
-   shape as the `asdf`, `github-actions` and `pre-commit` groups already
-   there, so a single grouped pull request per ecosystem is preserved and
+   shape as the `github-actions` and `pre-commit` groups already there, so
+   a single grouped pull request per ecosystem is preserved and
    `bot-auto-merge.yml`'s automerge grant does not start merging unrelated
    bumps together. Dropping `enabledManagers` entirely, to fall back to
    `config:recommended`'s own defaults, is the other option, once enough
@@ -186,11 +188,13 @@ review automation, and the usual community files already wired up.
    `enabledManagers` at the same time: running both bots against the same
    ecosystem opens duplicate pull requests for the same bump.
 
-   Pin every tool the project needs in `.tool-versions`, and its asdf plugin,
-   at a commit you have read, in
-   [.devcontainer/asdf-plugins](.devcontainer/asdf-plugins): the development
-   container installs exactly those, and a tool asdf cannot install goes in
-   [.devcontainer/Dockerfile](.devcontainer/Dockerfile) instead.
+   Install every tool the project needs in
+   [.devcontainer/Dockerfile](.devcontainer/Dockerfile). Prefer a
+   distribution package, then a vendor's own signed apt repository, then the
+   tool's official container image. There is no version manager here and
+   nothing pins a package version; see the base image's
+   `docs/TOOL_SOURCES.md` for why, and for the source line for each
+   repository whose signing key that image already carries.
 6. Set up what the merge pipeline in
    [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) needs but does not ship
    as a file: a `REPO_OWNER_LOGIN` repository variable set to the account
