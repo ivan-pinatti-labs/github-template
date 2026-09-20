@@ -146,6 +146,14 @@ repos:
         files: ^scripts/.*\.py$
         stages: [pre-commit]
 
+      # checkmake over the Makefile this template now ships. Read the
+      # library's checklist-dev-make.yaml before adding a target: checkmake
+      # reads only the first physical line of a .PHONY declaration and
+      # silently drops backslash continuations, so every .PHONY in the
+      # Makefile is written on one line.
+      - id: checklist-dev-make
+        stages: [pre-commit]
+
   # CITATION.cff is the one file here that no checklist reaches. It is YAML,
   # but `identify` tags it only `text`, since the tag comes from the extension
   # and `.cff` is not one it knows. Widening checklist-yaml's `types:`

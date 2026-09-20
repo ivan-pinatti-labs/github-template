@@ -67,7 +67,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # been watching it, so every base image digest bump was refused as "not a
 # dependency pin file" and had to be merged by hand past a required check.
 ALLOWED_PATHS = (
-    ".tool-versions",
     ".pre-commit-config.yaml",
     ".github/workflows/",
     ".devcontainer/Dockerfile",
