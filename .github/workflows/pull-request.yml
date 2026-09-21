@@ -11,7 +11,7 @@ name: PR Validation
 #
 # The pre-commit job below publishes the exact check context "Pre-commit"
 # (its name:, not its job id), because docs/MERGE_PIPELINE.md's
-# bot-auto-merge.yml and coderabbit-review-queue.yml hardcode that string as
+# bot-auto-merge.yml hardcodes that string as
 # a required context to wait on. It was named "Pre-Commit Checks" before the
 # org's merge pipeline was ported in; renaming a required check's context
 # after branch protection already requires the old name breaks the very

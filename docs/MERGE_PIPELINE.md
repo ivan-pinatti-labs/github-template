@@ -148,9 +148,8 @@ document.
 ## Recovering a stuck `Review Verified`
 
 `coderabbit-gate.yml`'s hourly schedule (`53 * * * *`, offset from
-`coderabbit-review-queue.yml`'s `29 * * * *` and from
-`ivan-pinatti-labs/rsync-crypt`'s and `ivan-pinatti-labs/.github`'s own `47 * * * *`
-sweeps) is a real mitigation, not a guarantee: GitHub's own documentation
+`ivan-pinatti-labs/rsync-crypt`'s and `ivan-pinatti-labs/.github`'s own
+`47 * * * *` sweeps) is a real mitigation, not a guarantee: GitHub's own documentation
 says scheduled workflows on public repositories are deprioritized under
 load and can be skipped outright rather than merely delayed, and
 rsync-crypt has already seen it happen twice in a row against its own
@@ -160,13 +159,20 @@ recovery path, run by anyone with write access, either against a single
 rsync-crypt's fuller document, "Recovering a stuck `Review Verified`,
 honestly," for the full reasoning; it applies here unchanged.
 
-`coderabbit-review-queue.yml`'s hourly nudge (`29 * * * *`) is what actually
-gets CodeRabbit to look at a bot's pull request in the first place, since
-CodeRabbit never reviews one on its own; see rsync-crypt's `AGENTS.md`,
-"CodeRabbit silently ignores `@coderabbitai review` from a bot account," for
-why that comment has to come from a human account, or from
-`CODERABBIT_NUDGE_TOKEN` rather than the default `GITHUB_TOKEN`, and for
-what to check before assuming a nudge is in flight.
+CodeRabbit never reviews a bot's pull request on its own, so one whose
+`Pin Only` verdict failed needs an explicit `@coderabbitai review`. A clean
+pin-only bump never needs one, because `Review Verified` already resolved to
+`success` with no CodeRabbit involvement.
+
+An hourly workflow used to post that comment. It was retired on 2026-09-20,
+because CodeRabbit ignores the command from a bot account: see rsync-crypt's
+`AGENTS.md`, "CodeRabbit silently ignores `@coderabbitai review` from a bot
+account", where it fired five times across most of a day and drew no reply
+at all. A person posts it instead, which needs no stored credential:
+
+```shell
+gh pr comment <n> --body '@coderabbitai review'
+```
 
 ## The merge queue
 
@@ -227,10 +233,6 @@ copied bot schedule whose slot must be reassigned to avoid collisions:
   queue" above, only after the port equivalent of this repository's own
   first pull request has merged (see "The bootstrap gap" above; it applies
   again, in full, to a brand-new repository).
-- **`CODERABBIT_NUDGE_TOKEN`.** An org secret, scoped to a selected list of
-  repositories rather than granted org-wide. A new repository needs adding
-  to that list before `coderabbit-review-queue.yml` can post as anything
-  other than a silently-failing `gh` call.
 - **The CodeRabbit and Renovate GitHub App installations.** Both are
   installed on the `ivan-pinatti-labs` organization with
   `repository_selection: selected`. A new repository needs adding to both
