@@ -129,8 +129,8 @@ repos:
       # newer on PATH, offline audits only, no token required); see this
       # repo's README. This id's own files: pattern already reaches every
       # workflow the merge pipeline adds (coderabbit-gate.yml,
-      # coderabbit-review-queue.yml, bot-auto-merge.yml) since all of them
-      # live under .github/; no separate selector is needed for those.
+      # bot-auto-merge.yml) since both live under .github/; no separate
+      # selector is needed for those.
       - id: checklist-github-actions
         files: ^\.github/
         stages: [pre-commit]

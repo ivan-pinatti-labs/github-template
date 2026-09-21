@@ -203,8 +203,7 @@ review automation, and the usual community files already wired up.
    first pull request, the one that actually adds these workflows, has
    merged; see that document's "The bootstrap gap"), the new repository
    added to both the CodeRabbit and Renovate GitHub App installations'
-   selected-repository lists, and the `CODERABBIT_NUDGE_TOKEN` org secret's
-   visibility extended to it. Neither bot needs a schedule picked for it:
+   selected-repository lists. Neither bot needs a schedule picked for it:
    both run daily in every repository, and a pin-only bump from either
    consumes no CodeRabbit review quota. See
    [ivan-pinatti-labs/.github](https://github.com/ivan-pinatti-labs/.github)

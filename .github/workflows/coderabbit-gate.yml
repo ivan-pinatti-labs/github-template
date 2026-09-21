@@ -79,7 +79,8 @@ name: CodeRabbit Gate
   # assuming the SHA it was told about is a pull request head.
   status:
   schedule:
-    # Offset from coderabbit-review-queue.yml's :29 so the two hourly jobs do
+    # Offset from the retired coderabbit-review-queue.yml's :29 so the two
+    # hourly jobs did
     # not compete for the same GitHub Actions minute for no reason. Also
     # offset from ivan-pinatti-labs/rsync-crypt's :47 and
     # ivan-pinatti-labs/.github's :47, so this repository's own hourly sweep
