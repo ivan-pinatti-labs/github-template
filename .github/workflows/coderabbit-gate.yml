@@ -80,7 +80,12 @@ name: CodeRabbit Gate
   status:
   schedule:
     # :53 rather than on the hour. This is the hourly sweep that re-grades
-    # every open pull request, so a missed or failed run recovers on its own.
+    # every open pull request, so a missed or failed run is usually picked up
+    # by the next one. Usually, not always: scheduled workflows on public
+    # repositories are deprioritized under load and can be skipped outright
+    # rather than merely delayed, which rsync-crypt has seen happen twice in
+    # a row. workflow_dispatch on this workflow is the manual recovery path.
+    # See docs/MERGE_PIPELINE.md, "Recovering a stuck `Review Verified`".
     #
     # The minute is deliberate but no longer contended. It was picked to clear
     # this repository's own coderabbit-review-queue.yml at :29, back when
