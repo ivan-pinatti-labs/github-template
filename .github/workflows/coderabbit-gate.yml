@@ -79,13 +79,22 @@ name: CodeRabbit Gate
   # assuming the SHA it was told about is a pull request head.
   status:
   schedule:
-    # Offset from the retired coderabbit-review-queue.yml's :29 so the two
-    # hourly jobs did
-    # not compete for the same GitHub Actions minute for no reason. Also
-    # offset from ivan-pinatti-labs/rsync-crypt's :47 and
-    # ivan-pinatti-labs/.github's :47, so this repository's own hourly sweep
-    # does not pile onto the same wall-clock minute as either sibling
-    # repository's for no reason.
+    # :53 rather than on the hour. This is the hourly sweep that re-grades
+    # every open pull request, so a missed or failed run is usually picked up
+    # by the next one. Usually, not always: scheduled workflows on public
+    # repositories are deprioritized under load and can be skipped outright
+    # rather than merely delayed, which rsync-crypt has seen happen twice in
+    # a row. workflow_dispatch on this workflow is the manual recovery path.
+    # See docs/MERGE_PIPELINE.md, "Recovering a stuck `Review Verified`".
+    #
+    # The minute is deliberate but no longer contended. It was picked to clear
+    # this repository's own coderabbit-review-queue.yml at :29, back when
+    # every repository ran two hourly CodeRabbit jobs rather than one, and to
+    # stay off ivan-pinatti-labs/rsync-crypt's :47 and
+    # ivan-pinatti-labs/.github's :47. Those queue workflows were retired on
+    # 2026-09-21, so only the sweeps remain. Kept as is: there is no reason to
+    # move a schedule that works, and moving it would only risk colliding with
+    # a sibling.
     - cron: "53 * * * *"
   workflow_dispatch:
     inputs:
