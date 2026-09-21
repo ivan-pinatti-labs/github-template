@@ -164,11 +164,14 @@ CodeRabbit never reviews a bot's pull request on its own, so one whose
 pin-only bump never needs one, because `Review Verified` already resolved to
 `success` with no CodeRabbit involvement.
 
-An hourly workflow used to post that comment. It was retired on 2026-09-20,
-because CodeRabbit ignores the command from a bot account: see rsync-crypt's
-`AGENTS.md`, "CodeRabbit silently ignores `@coderabbitai review` from a bot
-account", where it fired five times across most of a day and drew no reply
-at all. A person posts it instead, which needs no stored credential:
+An hourly workflow used to post that comment. It was retired on 2026-09-21,
+on cost rather than on capability: it posted with a personal access token, so
+the comment came from a human account and CodeRabbit answered it within
+seconds. What it cost was an organization secret scoped per repository that
+fails silently when a repository is left off its visibility list, and a job
+that could not see the shared review quota it was firing into. See
+rsync-crypt's `AGENTS.md`, "Why the hourly nudge was retired". A person posts
+it instead, which needs no stored credential:
 
 ```shell
 gh pr comment <n> --body '@coderabbitai review'
