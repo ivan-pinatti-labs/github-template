@@ -1,6 +1,14 @@
 ---
-# Reproduces github-template's scripts/assert-pin-only-diff.py, minus the dead
-# .tool-versions grammar that asdf's removal orphaned on 2026-09-19.
+# What a dependency bot may change here without a person reading the diff.
+# Read by the shared `Pin Only` check in ivan-pinatti-labs/gh-actions, which
+# reads it from the default branch rather than from the pull request being
+# graded. This file is deliberately absent from its own allowed_paths, so a
+# bot cannot widen its own lane.
+#
+# Reproduces the scripts/assert-pin-only-diff.py this replaced, minus the
+# dead .tool-versions grammar that asdf's removal orphaned on 2026-09-19.
+# A repository created from this template inherits these three surfaces and
+# should widen them to whatever it actually pins.
 allowed_paths:
   - .pre-commit-config.yaml
   - .github/workflows/
