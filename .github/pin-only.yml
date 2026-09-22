@@ -1,0 +1,21 @@
+---
+# Reproduces github-template's scripts/assert-pin-only-diff.py, minus the dead
+# .tool-versions grammar that asdf's removal orphaned on 2026-09-19.
+allowed_paths:
+  - .pre-commit-config.yaml
+  - .github/workflows/
+  - .devcontainer/Dockerfile
+
+rules:
+  - path: .devcontainer/Dockerfile
+    grammars: [image_digest]
+  - path: .github/workflows/
+    grammars:
+      - name: action_sha
+        when: outside_block_scalar
+      - name: bare_action_version
+        when: outside_block_scalar
+      - name: rev_pin
+        when: outside_block_scalar
+
+default_grammars: [action_sha, bare_action_version, rev_pin]

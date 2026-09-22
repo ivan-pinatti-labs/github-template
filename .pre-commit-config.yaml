@@ -139,7 +139,10 @@ repos:
       # requirements-txt-fixer, ruff-check --fix, ruff-format. Scoped to
       # scripts/, not the whole repo: this template stays language-agnostic,
       # and the only Python here is the merge pipeline's two verdict scripts
-      # (scripts/assert-pin-only-diff.py, scripts/coderabbit-review-verdict.py).
+      # The two scripts that used to be the only Python here moved to
+      # ivan-pinatti-labs/gh-actions on 2026-09-22. The id stays so a
+      # repository created from this template gets Python coverage as soon
+      # as it adds any; with no matching files it simply does nothing.
       # Drop this id, or widen the selector, once the repo created from this
       # template actually is a Python project.
       - id: checklist-dev-python
