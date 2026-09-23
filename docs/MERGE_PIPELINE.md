@@ -153,9 +153,9 @@ the `CodeRabbit` status rather than its color, and grades in three lanes (a
 draft is `pending`; a clean pin-only bot pull request is `success` with no
 review at all; everything else is `success` only for the literal
 description `Review completed`, `pending` while a review is queued or
-running, and `failure` otherwise). See the script's own docstring for the
-full reasoning behind each lane; it is the authoritative version, not this
-document.
+running, and `failure` otherwise). The shared check in
+ivan-pinatti-labs/gh-actions is the authoritative version of that
+reasoning, not this document.
 
 ## Recovering a stuck `Review Verified`
 

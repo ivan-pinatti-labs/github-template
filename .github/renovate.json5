@@ -91,7 +91,8 @@
 
   // A cooling window before an update is offered at all, mirroring
   // ivan-pinatti-labs/rsync-crypt's reasoning: `Pin Only` proves a diff
-  // changed nothing but a version token, and says so in its own docstring,
+  // changed nothing but a version token, and ivan-pinatti-labs/gh-actions documents
+  // exactly what that covers,
   // but it cannot tell a good release from a backdoored one, because a
   // fresh supply chain attack has no advisory yet for any scanner to match.
   // Age is the only defence against that, and granting automerge above
