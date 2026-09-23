@@ -99,7 +99,19 @@ workflow runs from events a `GITHUB_TOKEN` creates).
 Dependabot and Renovate open pull requests unattended. For the ones that are
 pin only:
 
-1. **`Pin Only` is graded.** `scripts/assert-pin-only-diff.py` checks that
+> **Where this code lives.** The two checks below are graded by
+> [ivan-pinatti-labs/gh-actions](https://github.com/ivan-pinatti-labs/gh-actions),
+> pinned by SHA in `.github/workflows/coderabbit-gate.yml`. They used to be two
+> scripts in this repository, and five other repositories carried their own
+> copies of the same two. What stays here is `.github/pin-only.yml`, which says
+> which files a dependency bot may touch and what a changed line in each may
+> differ by.
+>
+> Renovate bumps the pin, and because changing a pinned `uses:` is itself a
+> pin-only diff, that bump merges unattended: a fix upstream arrives here on
+> its own.
+
+1. **`Pin Only` is graded.** The shared pin-only check checks that
    every changed line differs from its counterpart in nothing but a
    version, in a pin position, across three allowed pin surfaces
    (`.pre-commit-config.yaml`, `.github/workflows/`,
@@ -114,7 +126,7 @@ pin only:
    `Review Verified`, is green and the approval is in place, the same as
    any other pull request.
 
-`scripts/coderabbit-review-verdict.py`'s bot lane resolves `Review Verified`
+The shared review verdict's bot lane resolves `Review Verified`
 straight to `success` with the description "pin-only diff, nothing to
 review" the moment `Pin Only` reads `success`, and CodeRabbit is never asked
 for an opinion; see rsync-crypt's document, "What actually gets reviewed,
@@ -135,15 +147,15 @@ review quota, a skipped draft, and an actual completed review all read
 `success`. Three pull requests merged with no review having actually
 happened on `docker-torrent-box-with-vpn` as a direct result (its #114).
 
-`scripts/coderabbit-review-verdict.py`, published as `Review Verified` by
+The shared review verdict, published as `Review Verified` by
 `coderabbit-gate.yml`, is the fix: it reads the actual description behind
 the `CodeRabbit` status rather than its color, and grades in three lanes (a
 draft is `pending`; a clean pin-only bot pull request is `success` with no
 review at all; everything else is `success` only for the literal
 description `Review completed`, `pending` while a review is queued or
-running, and `failure` otherwise). See the script's own docstring for the
-full reasoning behind each lane; it is the authoritative version, not this
-document.
+running, and `failure` otherwise). The shared check in
+ivan-pinatti-labs/gh-actions is the authoritative version of that
+reasoning, not this document.
 
 ## Recovering a stuck `Review Verified`
 
@@ -251,7 +263,7 @@ copied bot schedule whose slot must be reassigned to avoid collisions:
   requests in the same hour and queue behind each other for CodeRabbit's
   installation-wide review quota. The premise did not hold: a pin-only bump
   from *either* bot resolves `Review Verified` through
-  `coderabbit-review-verdict.py`'s bot lane without CodeRabbit ever being
+  the shared review verdict's bot lane without CodeRabbit ever being
   asked, so neither competes for that quota. The table was dropped on
   2026-09-02 and Dependabot moved to daily alongside Renovate. See that
   repository's `README.md` under "Dependency policy".

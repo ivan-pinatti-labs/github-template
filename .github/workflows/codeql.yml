@@ -1,14 +1,21 @@
 ---
 name: CodeQL
 
-# CodeQL security analysis of this repository's Python.
+# CodeQL security analysis of this repository's GitHub Actions workflows.
 #
-# Python only, and it is worth being clear how small that scope is. CodeQL
-# supports JavaScript/TypeScript, Ruby, Python, Go, Java/Kotlin, C/C++ and C#.
-# It does not support shell, Dockerfile, Makefile or YAML, which is most of
-# what this repository ships. Those are covered on every commit by the hooks in
-# .pre-commit-config.yaml instead. What CodeQL adds is the Python under
-# scripts/
+# Actions only, and it is worth being clear how small that scope is. CodeQL
+# supports JavaScript/TypeScript, Ruby, Python, Go, Java/Kotlin, C/C++, C# and
+# GitHub Actions. It does not support shell, Dockerfile, Makefile or plain
+# YAML, which is most of the rest of what this repository ships. Those are
+# covered on every commit by the hooks in .pre-commit-config.yaml instead.
+# What CodeQL adds is the workflows under .github/workflows/.
+#
+# This analyzed Python until the pipeline scripts moved to
+# ivan-pinatti-labs/gh-actions, which left the repository with no Python at
+# all. A CodeQL language with no source does not pass empty, it fails the run
+# outright ("CodeQL could not process any code written in Python"), so the
+# language has to move in the same pull request as the scripts rather than
+# after them.
 #
 # No `pull_request:` trigger. Code scanning derives alert lineage from
 # default-branch analyses, and this adds nothing a reviewer acts on inside a
@@ -27,7 +34,7 @@ permissions: {}
 
 jobs:
   analyze:
-    name: Analyze Python
+    name: Analyze Actions
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -43,7 +50,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
-          languages: python
+          languages: actions
           # 'security-extended' rather than the default suite: it keeps the
           # lower-severity and higher-false-positive security queries the
           # default omits, which is worth it over a tooling directory this
@@ -55,4 +62,4 @@ jobs:
         with:
           # A distinct category keeps this analysis's alert lineage separate
           # from any image or dependency scanner reporting into the same tab.
-          category: codeql-python
+          category: codeql-actions
