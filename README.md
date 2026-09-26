@@ -15,9 +15,9 @@ follow [Using this template](#using-this-template) below.
 
 ## Requirements
 
-The [development container](.devcontainer/README.md) carries everything
-below, so with it the host needs only rootless Podman and the one time setup
-that README describes. Without it:
+[devcontainer-airlock](.devcontainer/README.md) carries everything below,
+in containers, so with it the host needs only rootless Podman and the one
+time setup its documentation describes. Without it:
 
 - [`pre-commit`](https://pre-commit.com/#install) and `git`.
 - **Docker** (or a Docker CLI compatible runtime) on `PATH`.
@@ -80,11 +80,11 @@ that README describes. Without it:
   [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) for the full mechanics,
   including what branch protection, the merge queue ruleset, and two GitHub
   App installations expect from a repository created from this template.
-- **A development container** that runs every hook, `gh` and `git` over
-  SSH with rootless Podman, on the organization's shared base image. Tools
-  come from signed package repositories, and the Claude Code and Codex CLIs
-  come with the base image. `make shell` opens a shell in it from an
-  ordinary terminal, with no editor involved. See
+- **Wired for [devcontainer-airlock](https://github.com/ivan-pinatti-labs/devcontainer-airlock)**:
+  Claude Code and Codex each work in a workbench with no GitHub token and
+  no ssh key, and every hook, test and install runs in an L2 container with
+  only the working tree. `make claude`, `make codex` and `make unlock` start
+  it from an ordinary terminal. See
   [.devcontainer/README.md](.devcontainer/README.md).
 - **Issue and pull request templates**, a stale-issue policy, a
   `CODEOWNERS` file, and a `FUNDING.yml`, all under
@@ -188,13 +188,15 @@ review automation, and the usual community files already wired up.
    `enabledManagers` at the same time: running both bots against the same
    ecosystem opens duplicate pull requests for the same bump.
 
-   Install every tool the project needs in
-   [.devcontainer/Dockerfile](.devcontainer/Dockerfile). Prefer a
+   Install every tool the project's hooks and tests need in
+   [.devcontainer/l2/Dockerfile](.devcontainer/l2/Dockerfile), and list the
+   network services they reach in
+   [.devcontainer/egress-sets](.devcontainer/egress-sets). Prefer a
    distribution package, then a vendor's own signed apt repository, then the
    tool's official container image. There is no version manager here and
-   nothing pins a package version; see the base image's
+   nothing pins a package version; see devcontainer-airlock's
    `docs/TOOL_SOURCES.md` for why, and for the source line for each
-   repository whose signing key that image already carries.
+   repository whose signing key its images already carry.
 6. Set up what the merge pipeline in
    [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) needs but does not ship
    as a file: a `REPO_OWNER_LOGIN` repository variable set to the account

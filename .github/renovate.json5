@@ -4,7 +4,7 @@
   // Renovate is this template's active dependency bot: it covers every pin
   // surface this repository has: the pre-commit-checklists rev: pin in
   // .pre-commit-config.yaml, every commit-SHA action pin under
-  // .github/workflows/, and the base image digest the development container
+  // .github/workflows/, and the L2 image digest .devcontainer/l2/Dockerfile
   // pins. asdf was removed from this organization on 2026-09-19, so the
   // .tool-versions and .devcontainer/asdf-plugins surfaces are gone with it;
   // tools come from signed apt repositories now and no package version is
@@ -143,20 +143,20 @@
       automerge: true,
       addLabels: ["automerge"],
     },
-    // The development container's base image, pinned by digest in
-    // .devcontainer/Dockerfile. matchFileNames is what keeps the dockerfile
+    // The shared L2 image this repository's own L2 image builds on, pinned by
+    // digest in .devcontainer/l2/Dockerfile. matchFileNames is what keeps the dockerfile
     // manager to that one file: any other Dockerfile this repository grows
     // later stays unwatched until someone widens this deliberately.
     //
     // Merged unattended. A digest update matches none of the automerge
     // grants above, which cover patch and minor only, so this rule grants
-    // it itself. This is the organization's own image, built by ivan-pinatti-labs/devcontainer-images,
+    // it itself. This is the organization's own image, built by ivan-pinatti-labs/devcontainer-airlock,
     // and the quality gate lives there rather than in each consumer: that
     // repository ages its own upstream inputs through a seven day
     // minimumReleaseAge, sends Ubuntu minor and major moves to a person, and
     // only publishes from a reviewed merge to main. A digest
     // arriving here has therefore already passed that gate, and `Pin Only`
-    // grades the `ARG BASE_IMAGE=<image>@sha256:<digest>` line (IMAGE_DIGEST in
+    // grades the `ARG L2_IMAGE=<image>@sha256:<digest>` line (IMAGE_DIGEST in
     // the shared pin-only check's image_digest grammar), so the ordinary bot
     // lane approves it.
     // GHCR returns no release timestamp for a digest, so under Renovate's
@@ -166,13 +166,13 @@
     // Measured with a dry-run=full: "digest update of
     // ghcr.io/ivan-pinatti-labs/devcontainer-base has no releaseTimestamp to
     // age against". timestamp-optional lets the update be offered; the seven
-    // day window is applied upstream instead, in devcontainer-images, where the
+    // day window is applied upstream instead, in devcontainer-airlock, where the
     // image's own inputs are aged before anything is published.
     {
       matchManagers: ["dockerfile"],
-      matchFileNames: [".devcontainer/Dockerfile"],
-      groupName: "development container base image",
-      groupSlug: "devcontainer-base",
+      matchFileNames: [".devcontainer/l2/Dockerfile"],
+      groupName: "L2 image",
+      groupSlug: "airlock-l2",
       labels: ["dependencies", "tooling"],
       minimumReleaseAgeBehaviour: "timestamp-optional",
       automerge: true,
