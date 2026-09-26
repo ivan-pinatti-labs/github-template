@@ -83,8 +83,8 @@ time setup its documentation describes. Without it:
 - **Wired for [devcontainer-airlock](https://github.com/ivan-pinatti-labs/devcontainer-airlock)**:
   Claude Code and Codex each work in a workbench with no GitHub token and
   no ssh key, and every hook, test and install runs in an L2 container with
-  only the working tree. `make claude`, `make codex` and `make unlock` start
-  it from an ordinary terminal. See
+  only the working tree. `make claude` and `make codex` start it from an
+  ordinary terminal, and `make unlock` unlocks the ssh key for `git push`. See
   [.devcontainer/README.md](.devcontainer/README.md).
 - **Issue and pull request templates**, a stale-issue policy, a
   `CODEOWNERS` file, and a `FUNDING.yml`, all under
