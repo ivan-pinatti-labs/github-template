@@ -1,0 +1,6 @@
+# The network services this repository's hooks and builds reach, through its
+# egress proxy (workbench, github and ghcr are always on). One per line;
+# `podman run --rm localhost/airlock-egress-proxy:local egress-refresh --list`
+# lists them all.
+python
+node

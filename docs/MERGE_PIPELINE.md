@@ -115,7 +115,7 @@ pin only:
    every changed line differs from its counterpart in nothing but a
    version, in a pin position, across three allowed pin surfaces
    (`.pre-commit-config.yaml`, `.github/workflows/`,
-   `.devcontainer/Dockerfile`), and
+   `.devcontainer/l2/Dockerfile`), and
    `coderabbit-gate.yml` publishes its verdict as the `Pin Only` status. A
    number that is not a pin does not count as one.
 2. **The approval is supplied, conditionally.** `bot-auto-merge.yml` waits

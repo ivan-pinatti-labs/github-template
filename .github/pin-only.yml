@@ -12,10 +12,10 @@
 allowed_paths:
   - .pre-commit-config.yaml
   - .github/workflows/
-  - .devcontainer/Dockerfile
+  - .devcontainer/l2/Dockerfile
 
 rules:
-  - path: .devcontainer/Dockerfile
+  - path: .devcontainer/l2/Dockerfile
     grammars: [image_digest]
   - path: .github/workflows/
     grammars:
