@@ -80,6 +80,12 @@ time setup its documentation describes. Without it:
   [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) for the full mechanics,
   including what branch protection, the merge queue ruleset, and two GitHub
   App installations expect from a repository created from this template.
+- **SonarQube Cloud**, a static analysis of the workflows, YAML and
+  Dockerfile plus secrets detection over every file, on every pull request
+  and every push to `main`. Its `SonarQube` check is the quality gate's
+  verdict, and is not a required check yet. See
+  [.github/workflows/sonarqube.yml](.github/workflows/sonarqube.yml) and
+  step 7 below.
 - **Wired for [devcontainer-airlock](https://github.com/ivan-pinatti-labs/devcontainer-airlock)**:
   Claude Code and Codex each work in a workbench with no GitHub token and
   no ssh key, and every hook, test and install runs in an L2 container with
@@ -210,7 +216,17 @@ review automation, and the usual community files already wired up.
    consumes no CodeRabbit review quota. See
    [ivan-pinatti-labs/.github](https://github.com/ivan-pinatti-labs/.github)
    under "Dependency policy".
-7. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
+7. Import the new repository into SonarQube Cloud, under the default
+   project key SonarQube Cloud offers (`<owner>_<repository name>`),
+   turn Automatic Analysis off in that project's settings, and make a
+   `SONAR_TOKEN` secret visible to the repository (an organization secret
+   works). [.github/workflows/sonarqube.yml](.github/workflows/sonarqube.yml)
+   builds the organization and project key from the repository it runs in,
+   so nothing in the tree needs editing, but its `SonarQube` check fails
+   until both are in place. Once the project has code with tests, add a
+   coverage step to that workflow and point
+   [sonar-project.properties](sonar-project.properties) at the report.
+8. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
    is the right choice for the new project, and replace it if not.
 
 ## License

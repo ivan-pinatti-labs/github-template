@@ -41,6 +41,12 @@ no app code to run tests against and nothing to build a container image
 from. Every place rsync-crypt's document reasons about those two, this one
 simply drops.
 
+`SonarQube` runs too (`sonarqube.yml`), on every pull request and every
+push to `main`, and fails when the SonarQube Cloud quality gate does. It is
+not a required context yet: a later change makes it one and removes
+`codeql.yml`. It already passes on a `merge_group` commit without scanning,
+so requiring it will not stall the queue.
+
 ## A human pull request
 
 Open it as a **draft** first. `Pre-commit` runs the full hook set over every
@@ -225,10 +231,10 @@ of these files already on `main`, and the bootstrap gap closes for good.
 ## Using this pipeline from a repository created from this template
 
 Every file this document describes is part of the template and ships to a
-repository created from it. Five pieces of setup do not transfer
-automatically. The first four are repository or organization settings; none
-of them are files, so template creation has nothing to copy. The fifth is a
-copied bot schedule whose slot must be reassigned to avoid collisions:
+repository created from it. Four pieces of setup do not transfer
+automatically. None of them are files, so template creation has nothing
+to copy. The last entry, the bot schedules, used to be a fifth and now
+needs nothing:
 
 - **`REPO_OWNER_LOGIN`.** A repository variable, read by
   `bot-auto-merge.yml`'s `resolve-owner` job. This repository's own copy is
@@ -253,6 +259,16 @@ copied bot schedule whose slot must be reassigned to avoid collisions:
   `repository_selection: selected`. A new repository needs adding to both
   installations' repository lists before either app does anything on it at
   all; until then, `CodeRabbit` posts no status and Renovate opens nothing.
+- **The SonarQube Cloud project and `SONAR_TOKEN`.** `sonarqube.yml`
+  reports to the project keyed `<owner>_<repository name>` in the
+  SonarQube Cloud organization named after the owner, built from the
+  repository it runs in, so no file needs editing. The project itself
+  does not exist until someone imports the new repository in SonarQube
+  Cloud under that default key and turns Automatic Analysis off (a CI scan
+  aborts while it is on), and the job cannot authenticate until a
+  `SONAR_TOKEN` secret is visible to the repository. Until both are done
+  the `SonarQube` check fails, which is why it is not a required context
+  in a new repository either until its first scan passes.
 - **Nothing, for the bot schedules.** Both Dependabot and Renovate run daily
   in every repository in this organization, so a repository created from this
   template needs no schedule picked for it and can collide with no sibling.

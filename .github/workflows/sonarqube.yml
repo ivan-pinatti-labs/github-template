@@ -1,0 +1,102 @@
+name: SonarQube
+
+# SonarQube Cloud static analysis of everything Sonar has an analyzer for:
+# these workflows, YAML and the L2 Dockerfile, plus secrets detection over
+# every text file. Settings live in sonar-project.properties. It sits next to
+# the pre-commit hooks, it does not replace them: actionlint, zizmor and
+# yamllint keep running on every commit through the library's checklists,
+# and Sonar's rules are different from theirs, not a superset.
+#
+# The job fails when the SonarQube Cloud quality gate fails
+# (`sonar.qualitygate.wait=true`), so the `SonarQube` check is the gate
+# verdict itself, reported by GitHub Actions like `Pre-commit`. SonarQube
+# Cloud's own GitHub App also posts a check on the pull request; that one is
+# informational only, because it is never posted on a merge queue commit.
+#
+# This is a template repository, so the organization and project key are
+# not written down anywhere: the Scan step builds them from the repository
+# it runs in. A repository created from this template imports its own
+# project in SonarQube Cloud (default key, Automatic Analysis off) and needs
+# a SONAR_TOKEN secret before this job can pass. See sonar-project.properties
+# and "Using this template" in README.md.
+#
+# Triggers:
+#   pull_request   the analysis a reviewer reads, decorated onto the pull
+#                  request by SonarQube Cloud.
+#   push to main   the baseline every pull request's "new code" is measured
+#                  against. Without it the gate has nothing to compare to.
+#   merge_group    see the "Merge queue" step below.
+"on":
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  merge_group:
+
+permissions: {}
+
+concurrency:
+  group: >-
+    sonarqube-${{ github.event.pull_request.number ||
+    github.event.merge_group.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: SonarQube
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Merge queue
+        # Not analyzed. The queue's commit is main plus a pull request whose
+        # own head was already analyzed and gated here, and SonarQube Cloud
+        # has no pull request to attach a queue commit to, so an analysis
+        # there would be a branch analysis of a throwaway
+        # `gh-readonly-queue/...` branch. The push to main right after the
+        # merge analyzes the real result. The step still has to run and pass,
+        # or a required `SonarQube` check never appears on the queue's commit
+        # and the queue stalls.
+        if: github.event_name == 'merge_group'
+        run: echo "Merge queue commit; the pull request head was already analyzed."
+
+      - name: Refuse a fork's pull request
+        # GitHub withholds SONAR_TOKEN from a fork's pull_request run, so the
+        # scan cannot authenticate. Failing says so; passing would read as an
+        # analysis that never happened. A maintainer pushes the contributor's
+        # commits to a branch here and opens a pull request from that.
+        if: >-
+          github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error::SonarQube cannot analyze a fork's pull request (no SONAR_TOKEN)." \
+            "Push the branch to this repository instead."
+          exit 1
+
+      - name: Checkout
+        if: github.event_name != 'merge_group'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Full history: SonarQube Cloud reads blame to decide which lines
+          # are new code, and a shallow clone makes every line look new.
+          fetch-depth: 0
+
+      # No coverage step: this template has no code with tests. A repository
+      # created from it adds one here, before the scan, once it does.
+
+      - name: Scan
+        if: github.event_name != 'merge_group'
+        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          # The organization is the repository's owner and the key is
+          # `<owner>_<repository name>`, the shape SonarQube Cloud gives a
+          # project imported from GitHub, so each repository created from
+          # this template reports to its own project with nothing to edit.
+          args: >-
+            -Dsonar.organization=${{ github.repository_owner }}
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.qualitygate.wait=true
