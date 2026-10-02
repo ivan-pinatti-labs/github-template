@@ -81,9 +81,12 @@ time setup its documentation describes. Without it:
   including what branch protection, the merge queue ruleset, and two GitHub
   App installations expect from a repository created from this template.
 - **SonarQube Cloud**, a static analysis of the workflows, YAML and
-  Dockerfile plus secrets detection over every file, on every pull request
-  and every push to `main`. Its `SonarQube` check is the quality gate's
-  verdict, and is not a required check yet. See
+  Dockerfile plus secrets detection over the text files (`.secrets.baseline`
+  excluded), on every pull request from a branch of the repository and every
+  push to `main`. A fork's pull request fails the check without a scan,
+  since it cannot receive `SONAR_TOKEN`. Where it scans, the `SonarQube`
+  check is the quality gate's verdict; on a merge queue commit it passes
+  without scanning. It is not a required check yet. See
   [.github/workflows/sonarqube.yml](.github/workflows/sonarqube.yml) and
   step 7 below.
 - **Wired for [devcontainer-airlock](https://github.com/ivan-pinatti-labs/devcontainer-airlock)**:
@@ -216,15 +219,20 @@ review automation, and the usual community files already wired up.
    consumes no CodeRabbit review quota. See
    [ivan-pinatti-labs/.github](https://github.com/ivan-pinatti-labs/.github)
    under "Dependency policy".
-7. Import the new repository into SonarQube Cloud, under the default
-   project key SonarQube Cloud offers (`<owner>_<repository name>`),
-   turn Automatic Analysis off in that project's settings, and make a
-   `SONAR_TOKEN` secret visible to the repository (an organization secret
-   works). [.github/workflows/sonarqube.yml](.github/workflows/sonarqube.yml)
-   builds the organization and project key from the repository it runs in,
-   so nothing in the tree needs editing, but its `SonarQube` check fails
-   until both are in place. Once the project has code with tests, add a
-   coverage step to that workflow and point
+7. Import the new repository into SonarQube Cloud, under the default project
+   key SonarQube Cloud offers (`<owner>_<repository name>`), turn Automatic
+   Analysis off in that project's settings, and make a `SONAR_TOKEN` secret
+   visible to the repository (an organization secret works).
+   [.github/workflows/sonarqube.yml](.github/workflows/sonarqube.yml) builds
+   the organization and project key from the repository it runs in, so
+   nothing in the tree needs editing, but its `SonarQube` check fails until
+   both are in place. If the SonarQube Cloud organization's key is not the
+   GitHub owner's name (SonarQube Cloud lets you change it on import), set a
+   `SONAR_ORGANIZATION` repository or organization variable to that key; the
+   workflow uses it for both the organization and the project key. A fork's
+   pull request still fails the check without a scan: it cannot receive the
+   token, so push the branch to the repository instead. Once the project has
+   code with tests, add a coverage step to that workflow and point
    [sonar-project.properties](sonar-project.properties) at the report.
 8. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
    is the right choice for the new project, and replace it if not.

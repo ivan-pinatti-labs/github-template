@@ -41,11 +41,13 @@ no app code to run tests against and nothing to build a container image
 from. Every place rsync-crypt's document reasons about those two, this one
 simply drops.
 
-`SonarQube` runs too (`sonarqube.yml`), on every pull request and every
-push to `main`, and fails when the SonarQube Cloud quality gate does. It is
-not a required context yet: a later change makes it one and removes
-`codeql.yml`. It already passes on a `merge_group` commit without scanning,
-so requiring it will not stall the queue.
+`SonarQube` runs too (`sonarqube.yml`), on every pull request from a branch
+of this repository (a fork's pull request fails it without a scan, since it
+cannot receive `SONAR_TOKEN`) and every push to `main`, and fails when the
+SonarQube Cloud quality gate does. It is not a required context yet: a later
+change makes it one and removes `codeql.yml`. It already passes on a
+`merge_group` commit without scanning, so requiring it will not stall the
+queue.
 
 ## A human pull request
 

@@ -91,12 +91,16 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORG: ${{ vars.SONAR_ORGANIZATION || github.repository_owner }}
         with:
           # The organization is the repository's owner and the key is
           # `<owner>_<repository name>`, the shape SonarQube Cloud gives a
           # project imported from GitHub, so each repository created from
           # this template reports to its own project with nothing to edit.
+          # A SonarQube Cloud organization whose key differs from the owner's
+          # name (it can be changed on import) sets the SONAR_ORGANIZATION
+          # variable instead; both values then use it.
           args: >-
-            -Dsonar.organization=${{ github.repository_owner }}
-            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.organization=${{ env.SONAR_ORG }}
+            -Dsonar.projectKey=${{ env.SONAR_ORG }}_${{ github.event.repository.name }}
             -Dsonar.qualitygate.wait=true
