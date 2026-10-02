@@ -6,6 +6,7 @@
 [![GitHub Repo stars](https://img.shields.io/github/stars/ivan-pinatti-labs/github-template?logo=Github&style=for-the-badge)](https://github.com/ivan-pinatti-labs/github-template)
 [![GitHub forks](https://img.shields.io/github/forks/ivan-pinatti-labs/github-template?logo=Github&style=for-the-badge)](https://github.com/ivan-pinatti-labs/github-template/forks)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/ivan-pinatti-labs/github-template?utm_source=oss&utm_medium=github&utm_campaign=ivan-pinatti-labs%2Fgithub-template&labelColor=171717&color=FF570A&label=CodeRabbit+Reviews&style=for-the-badge)](https://coderabbit.ai)
+[![SonarQube Quality Gate](https://img.shields.io/sonar/quality_gate/ivan-pinatti-labs_github-template?server=https%3A%2F%2Fsonarcloud.io&logo=sonarqubecloud&style=for-the-badge)](https://sonarcloud.io/project/overview?id=ivan-pinatti-labs_github-template)
 
 A GitHub template repository: the starting point for a new project, with
 pre-commit, dependency automation, review automation, the
@@ -86,9 +87,14 @@ time setup its documentation describes. Without it:
   push to `main`. A fork's pull request fails the check without a scan,
   since it cannot receive `SONAR_TOKEN`. Where it scans, the `SonarQube`
   check is the quality gate's verdict; on a merge queue commit it passes
-  without scanning. It is not a required check yet. See
+  without scanning. It is a required check, and the organization's default
+  code scanner for public repositories. See
   [.github/workflows/sonarqube.yml](.github/workflows/sonarqube.yml) and
   step 7 below.
+- **CodeQL**, available but off: [.github/workflows/codeql.yml](.github/workflows/codeql.yml)
+  keeps only its manual trigger. A private repository, or one in a private
+  organization, may be better served by CodeQL (and Dependabot); its header
+  says how to switch it on.
 - **Wired for [devcontainer-airlock](https://github.com/ivan-pinatti-labs/devcontainer-airlock)**:
   Claude Code and Codex each work in a workbench with no GitHub token and
   no ssh key, and every hook, test and install runs in an L2 container with
@@ -233,8 +239,11 @@ review automation, and the usual community files already wired up.
    the project key. A project imported under any other key needs the
    `-Dsonar.projectKey` argument in that workflow changed to match. A fork's
    pull request still fails the check without a scan: it cannot receive the
-   token, so push the branch to the repository instead. Once the project has
-   code with tests, add a coverage step to that workflow and point
+   token, so push the branch to the repository instead. Once its first run on a
+   pull request has passed, add `SonarQube` to the required status checks in
+   `main`'s branch protection (see
+   [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md)). Once the project has code
+   with tests, add a coverage step to that workflow and point
    [sonar-project.properties](sonar-project.properties) at the report.
 8. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
    is the right choice for the new project, and replace it if not.

@@ -80,7 +80,7 @@ name: Bot Auto Merge
     branches:
       - main
   # For the owner's own path only. `Review Verified` is realistically the
-  # slowest of the three required contexts, since it depends on CodeRabbit's
+  # slowest of the four required contexts, since it depends on CodeRabbit's
   # own review completing, and `pull_request_target` alone never fires again
   # once a pull request stops changing, so without a second trigger a pull
   # request whose review finished after the first poll window closed would
@@ -96,8 +96,13 @@ name: Bot Auto Merge
   # restriction because it reacts to the run itself finishing, not to an API
   # call a token made during it, which is why it exists as the sanctioned
   # way to chain workflows without a personal access token.
+  #
+  # `SonarQube` is named here too, not just `CodeRabbit Gate`: the analysis
+  # can finish after the review does, and the owner's approval waits for
+  # its check as well, so its run finishing has to re-check the rollup the
+  # same way.
   workflow_run:
-    workflows: ["CodeRabbit Gate"]
+    workflows: ["CodeRabbit Gate", "SonarQube"]
     types: [completed]
 
 # The floor. Each job widens it for itself.
@@ -424,11 +429,12 @@ jobs:
               ;;
 
             workflow_run)
-              # Not narrowed to the one pull request coderabbit-gate.yml
-              # happened to grade in the run that just completed:
-              # `workflow_run.pull_requests` is only populated for the plain
-              # `pull_request` event, and coderabbit-gate.yml never uses it,
-              # so there is nothing reliable to narrow by. Re-checking every
+              # Not narrowed to the one pull request the run that just
+              # completed happened to cover: `workflow_run.pull_requests` is
+              # only populated for the plain `pull_request` event, and
+              # coderabbit-gate.yml never uses it, so there is nothing
+              # reliable to narrow by for that workflow, and one code path
+              # for both workflows beats two. Re-checking every
               # open owner authored pull request instead is cheap, since
               # this repository only ever has a handful open, and it costs
               # nothing extra to a pull request that is already approved:
@@ -514,24 +520,23 @@ jobs:
 
       - name: Wait for every required context to be green
         # Every required context, not just `Pin Only` the way the bot job
-        # waits: `Pre-commit`, `Pin Only` and `Review Verified` all have to
-        # read green before this job approves anything, because an approval
-        # issued before `Review Verified` settles would hand the owner a
+        # waits: `Pre-commit`, `SonarQube`, `Pin Only` and `Review Verified`
+        # all have to read green before this job approves anything, because an
+        # approval issued before `Review Verified` settles would hand the owner a
         # merge path around the CodeRabbit gate, and the owner is the one
         # author who can never be asked to supply that review themselves.
         #
         # `statusCheckRollup`, not the `/commits/{sha}/status` endpoint the
-        # bot job's wait step reads, because `Pre-commit` is an ordinary
-        # GitHub Check (a workflow job), not a commit status, and that
-        # endpoint only ever returns the latter. `statusCheckRollup` is the
-        # one place both shapes show up together, the same reasoning
-        # shapes show up together.
+        # bot job's wait step reads, because `Pre-commit` and `SonarQube` are
+        # ordinary GitHub Checks (workflow jobs), not commit statuses, and
+        # that endpoint only ever returns the latter. `statusCheckRollup` is
+        # the one place both shapes show up together.
         #
         # A two minute window is still not a guarantee `Review Verified`
         # settles inside it, since it depends on CodeRabbit's own review
         # completing. What makes that survivable rather than a dead end is
         # the `workflow_run` trigger above: every time coderabbit-gate.yml
-        # finishes a run, this job runs again and re-reads the rollup fresh,
+        # or sonarqube.yml finishes a run, this job runs again and re-reads the rollup fresh,
         # rather than depending on this one poll window catching the change
         # or on someone pushing a pull request that has nothing left to
         # change.
@@ -542,7 +547,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          required='["Pre-commit","Pin Only","Review Verified"]'
+          required='["Pre-commit","SonarQube","Pin Only","Review Verified"]'
           for _ in $(seq 1 24); do
             # $owner, $name and $number below are GraphQL query variables,
             # not shell expansions; they are meant to stay literal inside
