@@ -57,8 +57,8 @@ cannot receive `SONAR_TOKEN`; a maintainer pushes the branch here instead.
 It replaced CodeQL as this repository's code scanner. `codeql.yml` still
 ships with the template, disabled (only its manual `workflow_dispatch`
 trigger is left), for a repository created from this template that is
-private or in a private organization and would rather run CodeQL; see that
-file's header.
+private or in a private organization and would rather run CodeQL (code
+scanning there needs GitHub Code Security enabled); see that file's header.
 
 ## A human pull request
 

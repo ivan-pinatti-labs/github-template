@@ -93,8 +93,9 @@ time setup its documentation describes. Without it:
   step 7 below.
 - **CodeQL**, available but off: [.github/workflows/codeql.yml](.github/workflows/codeql.yml)
   keeps only its manual trigger. A private repository, or one in a private
-  organization, may be better served by CodeQL (and Dependabot); its header
-  says how to switch it on.
+  organization, may be better served by CodeQL (and Dependabot), provided it
+  has GitHub Code Security enabled, which code scanning there needs; its
+  header says how to switch it on.
 - **Wired for [devcontainer-airlock](https://github.com/ivan-pinatti-labs/devcontainer-airlock)**:
   Claude Code and Codex each work in a workbench with no GitHub token and
   no ssh key, and every hook, test and install runs in an L2 container with

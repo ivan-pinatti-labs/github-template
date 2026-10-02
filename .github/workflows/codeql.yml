@@ -11,9 +11,10 @@ name: CodeQL
 # belongs to a private organization, may be better served by CodeQL (and by
 # Dependabot): to switch, restore the commented `push` and `schedule`
 # triggers below, and follow the note at the top of
-# .github/dependabot.yml. The dispatch trigger stays even while disabled
-# because a workflow with no `on:` at all is invalid, and GitHub reports it
-# as a failed run.
+# .github/dependabot.yml. Code scanning on a private or internal repository
+# needs GitHub Code Security enabled, or the upload step fails. The
+# dispatch trigger stays even while disabled because a workflow with no
+# `on:` at all is invalid, and GitHub reports it as a failed run.
 #
 # CodeQL security analysis of this repository's GitHub Actions workflows.
 #
