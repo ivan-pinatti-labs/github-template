@@ -22,6 +22,12 @@ version: 2
 # still the reasoning that would apply the moment a block's limit goes back
 # up.
 #
+# Renovate (and SonarQube Cloud for code scanning) is the default for this
+# organization's public repositories. A repository created from this template
+# that is private, or in a private organization, may be better served by
+# Dependabot (and CodeQL): make the two edits above for each ecosystem, and
+# see the header of workflows/codeql.yml for the CodeQL side.
+#
 # Dependabot handles GitHub Actions and pre-commit hook revs when enabled;
 # Renovate handles the development container's base image digest, which Dependabot
 # cannot parse. See renovate.json5 in this directory.

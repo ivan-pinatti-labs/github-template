@@ -1,6 +1,21 @@
 ---
 name: CodeQL
 
+# Disabled by default. Only `workflow_dispatch` is left as a trigger, so it
+# runs only when someone starts it by hand; the automatic triggers below are
+# commented out.
+#
+# SonarQube Cloud (sonarqube.yml) is the default code scanner for this
+# organization's public repositories, as Renovate is the default dependency
+# bot. A repository created from this template that is private, or that
+# belongs to a private organization, may be better served by CodeQL (and by
+# Dependabot): to switch, restore the commented `push` and `schedule`
+# triggers below, and follow the note at the top of
+# .github/dependabot.yml. Code scanning on a private or internal repository
+# needs GitHub Code Security enabled, or the upload step fails. The
+# dispatch trigger stays even while disabled because a workflow with no
+# `on:` at all is invalid, and GitHub reports it as a failed run.
+#
 # CodeQL security analysis of this repository's GitHub Actions workflows.
 #
 # Actions only, and it is worth being clear how small that scope is. CodeQL
@@ -20,14 +35,14 @@ name: CodeQL
 # No `pull_request:` trigger. Code scanning derives alert lineage from
 # default-branch analyses, and this adds nothing a reviewer acts on inside a
 # pull request, so a weekly schedule plus the merge to main keeps the Security
-# tab current. workflow_dispatch is there for a manual re-run.
+# tab current once enabled. workflow_dispatch is there for a manual run.
 on:
-  push:
-    branches: [main]
-  schedule:
-    # Staggered across the organization's repositories so their CodeQL runs do
-    # not all contend for a runner at the same minute.
-    - cron: "0 10 * * 1"
+  # push:
+  #   branches: [main]
+  # schedule:
+  #   # Staggered across the organization's repositories so their CodeQL runs
+  #   # do not all contend for a runner at the same minute.
+  #   - cron: "0 10 * * 1"
   workflow_dispatch: {}
 
 permissions: {}

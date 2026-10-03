@@ -6,6 +6,7 @@
 [![GitHub Repo stars](https://img.shields.io/github/stars/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME?logo=Github&style=for-the-badge)](https://github.com/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME)
 [![GitHub forks](https://img.shields.io/github/forks/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME?logo=Github&style=for-the-badge)](https://github.com/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME/forks)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/REPLACE_ME_OWNER/REPLACE_ME_REPO_NAME?utm_source=oss&utm_medium=github&utm_campaign=REPLACE_ME_OWNER%2FREPLACE_ME_REPO_NAME&labelColor=171717&color=FF570A&label=CodeRabbit+Reviews&style=for-the-badge)](https://coderabbit.ai)
+[![SonarQube Quality Gate](https://img.shields.io/sonar/quality_gate/REPLACE_ME_OWNER_REPLACE_ME_REPO_NAME?server=https%3A%2F%2Fsonarcloud.io&logo=sonarqubecloud&style=for-the-badge)](https://sonarcloud.io/project/overview?id=REPLACE_ME_OWNER_REPLACE_ME_REPO_NAME)
 
 REPLACE_ME_PROJECT_DESCRIPTION
 
@@ -23,8 +24,13 @@ are deliberately not the obvious ones:
 - The license points at LICENSE.md, the filename this template ships. If
   you rename it to LICENSE, update the link too.
 
-Drop the Sponsors and CodeRabbit badges if the new project is not
-ivan-pinatti's or is not reviewed by CodeRabbit.
+Drop the Sponsors, CodeRabbit and SonarQube badges if the new project is
+not ivan-pinatti's, is not reviewed by CodeRabbit or is not analyzed by
+SonarQube Cloud. The SonarQube badge's project key is the owner and the
+repository name joined by an underscore, the key sonarqube.yml scans by
+default. If a SONAR_ORGANIZATION variable sets a different organization
+key, use that key in place of the owner in both badge URLs, or the badge
+shows a project that is never scanned.
 -->
 
 ## Requirements
