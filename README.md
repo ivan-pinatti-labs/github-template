@@ -80,6 +80,15 @@ time setup its documentation describes. Without it:
   [docs/MERGE_PIPELINE.md](docs/MERGE_PIPELINE.md) for the full mechanics,
   including what branch protection, the merge queue ruleset, and two GitHub
   App installations expect from a repository created from this template.
+- **SonarQube Cloud**, a static analysis of the workflows, YAML and
+  Dockerfile plus secrets detection over the text files (`.secrets.baseline`
+  excluded), on every pull request from a branch of the repository and every
+  push to `main`. A fork's pull request fails the check without a scan,
+  since it cannot receive `SONAR_TOKEN`. Where it scans, the `SonarQube`
+  check is the quality gate's verdict; on a merge queue commit it passes
+  without scanning. It is not a required check yet. See
+  [.github/workflows/sonarqube.yml](.github/workflows/sonarqube.yml) and
+  step 7 below.
 - **Wired for [devcontainer-airlock](https://github.com/ivan-pinatti-labs/devcontainer-airlock)**:
   Claude Code and Codex each work in a workbench with no GitHub token and
   no ssh key, and every hook, test and install runs in an L2 container with
@@ -210,7 +219,24 @@ review automation, and the usual community files already wired up.
    consumes no CodeRabbit review quota. See
    [ivan-pinatti-labs/.github](https://github.com/ivan-pinatti-labs/.github)
    under "Dependency policy".
-7. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
+7. Import the new repository into SonarQube Cloud, under the project key
+   SonarQube Cloud suggests (`<organization key>_<repository name>`), turn
+   Automatic Analysis off in that project's settings, and make a `SONAR_TOKEN`
+   secret visible to the repository (an organization secret works).
+   [.github/workflows/sonarqube.yml](.github/workflows/sonarqube.yml) builds
+   the organization and project key from the repository it runs in, so nothing
+   in the tree needs editing, but its `SonarQube` check fails until both are in
+   place. The organization key defaults to the GitHub owner's name; if the
+   SonarQube Cloud organization's key differs (SonarQube Cloud lets you change
+   it on import), set a `SONAR_ORGANIZATION` repository or organization
+   variable to that key, and the workflow uses it for both the organization and
+   the project key. A project imported under any other key needs the
+   `-Dsonar.projectKey` argument in that workflow changed to match. A fork's
+   pull request still fails the check without a scan: it cannot receive the
+   token, so push the branch to the repository instead. Once the project has
+   code with tests, add a coverage step to that workflow and point
+   [sonar-project.properties](sonar-project.properties) at the report.
+8. Decide whether the default [LICENSE.md](LICENSE.md) (Apache License 2.0)
    is the right choice for the new project, and replace it if not.
 
 ## License
