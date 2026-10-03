@@ -262,11 +262,13 @@ needs nothing:
   installations' repository lists before either app does anything on it at
   all; until then, `CodeRabbit` posts no status and Renovate opens nothing.
 - **The SonarQube Cloud project and `SONAR_TOKEN`.** `sonarqube.yml`
-  reports to the project keyed `<owner>_<repository name>` in the
-  SonarQube Cloud organization named after the owner, built from the
-  repository it runs in, so no file needs editing. The project itself
-  does not exist until someone imports the new repository in SonarQube
-  Cloud under that default key and turns Automatic Analysis off (a CI scan
+  reports to the project keyed `<organization key>_<repository name>`,
+  built from the repository it runs in, so no file needs editing. The
+  organization key is the owner's name unless a `SONAR_ORGANIZATION`
+  variable sets another; a project imported under any other key needs the
+  workflow's `-Dsonar.projectKey` argument changed to match. The project
+  itself does not exist until someone imports the new repository in
+  SonarQube Cloud under that suggested key and turns Automatic Analysis off (a CI scan
   aborts while it is on), and the job cannot authenticate until a
   `SONAR_TOKEN` secret is visible to the repository. Until both are done
   the `SonarQube` check fails, which is why it is not a required context
