@@ -27,7 +27,10 @@ are deliberately not the obvious ones:
 Drop the Sponsors, CodeRabbit and SonarQube badges if the new project is
 not ivan-pinatti's, is not reviewed by CodeRabbit or is not analyzed by
 SonarQube Cloud. The SonarQube badge's project key is the owner and the
-repository name joined by an underscore, SonarQube Cloud's default key.
+repository name joined by an underscore, the key sonarqube.yml scans by
+default. If a SONAR_ORGANIZATION variable sets a different organization
+key, use that key in place of the owner in both badge URLs, or the badge
+shows a project that is never scanned.
 -->
 
 ## Requirements
