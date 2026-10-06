@@ -41,3 +41,118 @@ reviews:
   #     enabled: false
   #   markdownlint:
   #     enabled: false
+
+  # How hard to look. assertive raises more than chill does; whatever ships
+  # from this template is copied into every repository created from it, so
+  # a missed edge case costs more than an extra comment.
+  profile: assertive
+
+  # Review guidance. The first two entries are the organization's
+  # public-repository rules, kept the same in every ivan-pinatti-labs
+  # repository; leave them as they are. The rest are specific to
+  # github-template: a repository created from this template replaces them
+  # with 2 to 4 entries of its own, drawn from its AGENTS.md and docs.
+  # Pre-commit already runs the linters, so these ask for judgment the hooks
+  # cannot make.
+  path_instructions:
+    - path: "**"
+      instructions: |
+        This repository is public. Flag, as a blocking issue, anything in the
+        diff that should not be published:
+        - secrets, tokens, keys, passwords, session cookies, connection
+          strings, or anything that looks like one, even in tests or docs;
+        - personal data: names other than the maintainer's public handle,
+          email addresses other than a users.noreply.github.com one, phone
+          numbers, physical addresses;
+        - machine specific details: absolute home paths (/home/<user>,
+          /Users/<user>), host names, LAN or private IP addresses, internal
+          domains, cloud account IDs, ARNs, AWS profile names, cluster
+          contexts, and details of anyone's own deployment;
+        - AI attribution in any file, commit message or the pull request
+          text: a Co-Authored-By trailer naming an AI agent, a "Generated
+          with" line, an agent session link, or any other line that names
+          or links the agent that wrote the change.
+        Also check that every behavior change comes with tests that would
+        fail without it, and that the docs describe the new behavior. The
+        organization's rule is 100% test coverage of the code it ships:
+        flag, as a blocking issue, any new or changed line or branch of code
+        (not docs or configuration) that no test exercises, and name the
+        test that would cover it. Do not comment on formatting the
+        pre-commit hooks already enforce.
+    - path: "**/*.md"
+      instructions: |
+        Prose does not use a hyphen, em dash or en dash as punctuation; use
+        commas, parentheses or separate sentences (hyphens inside compound
+        words, code, paths and flags are fine). Point out claims the code in
+        this pull request does not back up.
+    # github-template specific, from AGENTS.md "What this repository is".
+    # Replace these in a repository created from this template.
+    - path: "{README.md,docs/STARTER_README.md,CITATION.cff,llms.txt}"
+      instructions: |
+        This is a template repository. REPLACE_ME placeholders must stay
+        placeholders, since "Using this template" in README.md tells a new
+        repository's owner to search for them; flag one filled in with a
+        real value. Keep the steps in "Using this template" in step with
+        the files they describe, and flag a change to a shipped file that
+        leaves a step wrong. docs/STARTER_README.md becomes a new
+        repository's README.md, so its links must be correct from the
+        repository root, not from docs/.
+    - path: "{.github/**,docs/MERGE_PIPELINE.md,.pre-commit-config.yaml,sonar-project.properties}"
+      instructions: |
+        Everything here is copied into a new repository once, when it is
+        created, and existing repositories carry their own copies. When a
+        pull request fixes one of these files, flag it if the description
+        does not say whether existing repositories need the same change.
+        Flag anything that names this
+        template repository, or a value that only fits it, where a
+        repository created from it would inherit a wrong value; such a
+        value is a REPLACE_ME placeholder or is derived at run time.
+
+  # Pull request checks shown in the walkthrough. Warnings, not errors: the
+  # merge pipeline already gates on CodeRabbit's review through Review
+  # Verified (docs/MERGE_PIPELINE.md).
+  pre_merge_checks:
+    title:
+      mode: warning
+      requirements: >-
+        Conventional Commits: type(optional scope): imperative subject,
+        lowercase, no trailing period, at most 72 characters.
+    description:
+      mode: warning
+    custom_checks:
+      - name: Public repository hygiene
+        mode: warning
+        instructions: >-
+          Fail if the diff, commit messages or pull request text add a
+          secret or something that looks like one, an email address other
+          than a users.noreply.github.com one, an absolute home path, a
+          private or machine specific host name, a private IP address, a
+          cloud account ID or ARN, or details of a personal deployment.
+          Pass otherwise.
+      - name: No AI attribution
+        mode: warning
+        instructions: >-
+          Fail if any commit message, the pull request title or description,
+          or any file in the diff contains a Co-Authored-By trailer naming an
+          AI agent, a "Generated with" line, an agent session link, or any
+          other line that names or links the AI agent that made the change.
+          Pass otherwise.
+
+# Tone of review comments and chat.
+tone_instructions: >-
+  Direct and specific: lead with the defect and a concrete fix, in plain
+  words. No praise, no emoji, no hype. Skip style points a linter already
+  reports.
+
+# The repository's own rules, read as coding guidelines for every review.
+# A repository created from this template adds its own key docs here.
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - AGENTS.md
+      - CONTRIBUTING.md
+      # Guidelines outside the root apply only to their own folder unless
+      # applyTo widens them, and these govern the whole repository.
+      - files: "docs/MERGE_PIPELINE.md"
+        applyTo: "**/*"
