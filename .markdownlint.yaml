@@ -9,3 +9,8 @@ MD013:
   line_length: 100
   code_blocks: false
   tables: false
+
+# The README's support block (sponsor badges and the crypto QR table) is
+# HTML, as in pre-commit-checklists; allow exactly the elements it uses.
+MD033:
+  allowed_elements: [a, br, code, div, img, table, td, tr]
