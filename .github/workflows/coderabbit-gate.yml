@@ -64,7 +64,7 @@ jobs:
     # proposes nothing and the pin never moves. Every other pinned `uses:` in
     # this organization carries the same shape.
     # yamllint disable-line rule:line-length
-    uses: ivan-pinatti-labs/gh-actions/.github/workflows/reusable-coderabbit-gate.yml@be9535d0517f313066d611c899d27c377ecc19f1 # v0.7.1
+    uses: ivan-pinatti-labs/gh-actions/.github/workflows/reusable-coderabbit-gate.yml@7f826a6bb14fd4b9b4b064409ef1ccddcba00793 # v0.7.4
     permissions:
       contents: read
       pull-requests: read
