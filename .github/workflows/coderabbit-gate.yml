@@ -27,11 +27,12 @@ name: CodeRabbit Gate
 # not in its own allowed_paths, so a bot cannot widen its own lane.
 
 "on":
-  # zizmor: ignore[dangerous-triggers]
+  # dangerous-triggers is ignored on each trigger line below, which is where
+  # zizmor reports it from 1.31 on; an ignore up here no longer reaches it.
   #
   # Never checks out the pull request. The shared workflow pins its checkout to
   # the default branch and reads the pull request only as API data.
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   status:
   schedule:
