@@ -66,6 +66,17 @@
   // person rather than merging on the strength of a default nobody chose.
   automerge: false,
 
+  // Rebase a bot pull request as soon as main moves past it, not only when
+  // it conflicts. `Pin Only` reads a hash lock, and where a workflow's block
+  // scalars sit, from main itself, and refuses when main has changed that
+  // file since the pull request branched, because it can no longer prove
+  // the diff's base. Without this such a pull request stays refused until a
+  // person ticks its rebase box (pre-commit-checklists #118 sat refused for
+  // two days). Renovate doing the rebase also keeps the push attributed to
+  // renovate[bot], so a bot approval still counts as approval of the last
+  // push. docker-torrent-box-with-vpn already carries this setting.
+  rebaseWhen: "behind-base-branch",
+
   // The pin surfaces this repository actually has. github-actions covers
   // every uses: SHA pin under .github/workflows/; pre-commit covers
   // .pre-commit-config.yaml's rev:; dockerfile covers the base image digest
@@ -174,6 +185,15 @@
       groupName: "L2 image",
       groupSlug: "airlock-l2",
       labels: ["dependencies", "tooling"],
+    },
+    // The age waiver and the automerge grant described above, scoped to the
+    // L2 image's own digest. Granted on the whole file, they would also reach
+    // any other image added to this Dockerfile later, unaged and unattended.
+    {
+      matchManagers: ["dockerfile"],
+      matchFileNames: [".devcontainer/l2/Dockerfile"],
+      matchPackageNames: ["ghcr.io/ivan-pinatti-labs/airlock-l2"],
+      matchUpdateTypes: ["digest"],
       minimumReleaseAgeBehaviour: "timestamp-optional",
       automerge: true,
       addLabels: ["automerge"],
