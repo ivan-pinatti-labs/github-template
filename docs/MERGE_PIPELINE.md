@@ -166,9 +166,19 @@ review quota, a skipped draft, and an actual completed review all read
 `success`. Three pull requests merged with no review having actually
 happened on `docker-torrent-box-with-vpn` as a direct result (its #114).
 
+That was the legacy commit status. Since late October 2026 (measured in
+ivan-pinatti-labs/gh-actions#96) CodeRabbit
+reports by default as a `CodeRabbit` check run instead, with no status, and a
+rate limited review there concludes `neutral`, which branch protection passes
+just the same, so the problem is unchanged. The shared verdict reads the
+words of whichever report is newer: a status's description, or a check run's
+result line, which counts as `Review completed` only on a run that concluded
+`success`. No report yet is `pending`, not `failure`.
+
 The shared review verdict, published as `Review Verified` by
-`coderabbit-gate.yml`, is the fix: it reads the actual description behind
-the `CodeRabbit` status rather than its color, and grades in three lanes (a
+`coderabbit-gate.yml`, is the fix: it reads the actual words behind
+CodeRabbit's newer report, its status description or its check run's result,
+rather than its color, and grades in three lanes (a
 draft is `pending`; a clean pin-only bot pull request is `success` with no
 review at all; everything else is `success` only for the literal
 description `Review completed`, `pending` while a review is queued or
@@ -177,6 +187,21 @@ ivan-pinatti-labs/gh-actions is the authoritative version of that
 reasoning, not this document.
 
 ## Recovering a stuck `Review Verified`
+
+A finished review normally needs no recovery. CodeRabbit reports a review as
+a `CodeRabbit` check run by default since late October 2026, with no commit
+status, and `coderabbit-gate.yml` re-grades `Review Verified` when that check
+run completes (its `check_run` trigger), as it does on a CodeRabbit status.
+The shared gate reads the newer of the two reports, counting only
+CodeRabbit's own (ivan-pinatti-labs/gh-actions#96).
+
+Reading check runs needs no permission on a public repository, which is why
+neither this workflow nor the shared gate asks for `checks: read`. A
+private repository created from this template cannot read them that way:
+there the check run read fails and `Review Verified` is not published. It
+needs `checks: read` granted by its own `coderabbit-gate.yml` and requested
+by the shared gate's job, which the shared gate does not do today, so a
+private repository should not adopt this template's gate until it does.
 
 `coderabbit-gate.yml`'s hourly schedule (`53 * * * *`, offset from
 `ivan-pinatti-labs/rsync-crypt`'s and `ivan-pinatti-labs/.github`'s own
