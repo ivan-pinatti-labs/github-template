@@ -166,7 +166,8 @@ review quota, a skipped draft, and an actual completed review all read
 `success`. Three pull requests merged with no review having actually
 happened on `docker-torrent-box-with-vpn` as a direct result (its #114).
 
-That was the legacy commit status. Since late October 2026 CodeRabbit
+That was the legacy commit status. Since late October 2026 (measured in
+ivan-pinatti-labs/gh-actions#96) CodeRabbit
 reports by default as a `CodeRabbit` check run instead, with no status, and a
 rate limited review there concludes `neutral`, which branch protection passes
 just the same, so the problem is unchanged. The shared verdict reads the
