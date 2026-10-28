@@ -35,6 +35,11 @@ name: CodeRabbit Gate
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   status:
+  # CodeRabbit reports a review as a check run, with no status, since late
+  # October 2026, so a finished review re-grades from here rather than at the
+  # next event or sweep. The shared gate reads it with no extra permission.
+  check_run:
+    types: [completed]
   schedule:
     # Unchanged from this repository's own previous schedule.
     - cron: "53 * * * *"
