@@ -166,6 +166,14 @@ review quota, a skipped draft, and an actual completed review all read
 `success`. Three pull requests merged with no review having actually
 happened on `docker-torrent-box-with-vpn` as a direct result (its #114).
 
+That was the legacy commit status. Since late October 2026 CodeRabbit
+reports by default as a `CodeRabbit` check run instead, with no status, and a
+rate limited review there concludes `neutral`, which branch protection passes
+just the same, so the problem is unchanged. The shared verdict reads the
+words of whichever report is newer: a status's description, or a check run's
+result line, which counts as `Review completed` only on a run that concluded
+`success`. No report yet is `pending`, not `failure`.
+
 The shared review verdict, published as `Review Verified` by
 `coderabbit-gate.yml`, is the fix: it reads the actual description behind
 the `CodeRabbit` status rather than its color, and grades in three lanes (a
