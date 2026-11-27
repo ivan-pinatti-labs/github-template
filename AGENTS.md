@@ -122,8 +122,10 @@ from two different vendors, and then CodeRabbit's once it is marked ready:
    No agent instructions or memory are loaded into it (Codex's own global
    `AGENTS.md`, if one exists, is the exception the script warns about),
    and round 1 gets none of the author's reasoning, so it judges the change
-   on its own. It runs
-   where the reviewer CLIs and their logins are, never in L2.
+   on its own. It runs where the reviewer CLIs and their logins are, never
+   in L2. Codex's sandbox stops writes and the network but not reads: its
+   shell can read any file the user running it can, so where that matters,
+   run it as a user or in a container holding nothing private.
 3. **Answer every finding.** Fix it and commit, or decline it with the
    reason in `.cross-review/<branch>/declined.md` (in the main checkout,
    shared by every worktree, gitignored). Run `make cross-review` again, and

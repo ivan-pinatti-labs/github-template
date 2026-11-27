@@ -11,6 +11,13 @@
 # author's reasoning. The files are still in the checkout and a reviewer
 # could open them; blind means not loaded, not hidden.
 #
+# What the reviewer can read differs. Claude's file tools are kept to this
+# checkout (--restricted). Codex's shell can read any file the user running
+# this can, since its read only sandbox limits writes and the network, not
+# reads. A diff that carries instructions could so steer Codex into reading
+# private files into its answer. Run it as a user, or in a container, that
+# holds nothing the reviewer should not see.
+#
 # It runs where the reviewer CLIs and their logins are: on a host, or in
 # whatever environment holds them. It is not project code for a container
 # with no network and no credentials, because the reviewer needs both.
@@ -232,10 +239,12 @@ codex)
     -c project_doc_max_bytes=0
     -c 'web_search="disabled"'
     ${mcp_off[@]+"${mcp_off[@]}"})
-  # No memory, and no tool that reaches past this checkout: web search
-  # and MCP servers (above), apps, plugins, the browser and computer
-  # use. Its shell stays, inside the read only sandbox, to read the code.
-  # Hooks stay on: that is where a command guard lives.
+  # No memory, and no tool that reaches the network or other programs:
+  # web search and MCP servers (above), apps, plugins, the browser and
+  # computer use. Its shell stays, to read the code. The read only sandbox
+  # stops it writing and reaching the network, not reading: the shell can
+  # read any file this user can (see the header). Hooks stay on: that is
+  # where a command guard lives.
   for feature in memories external_agent_memory_import apps plugins \
     remote_plugin browser_use browser_use_external browser_use_full_cdp_access \
     computer_use image_generation skill_mcp_dependency_install \
