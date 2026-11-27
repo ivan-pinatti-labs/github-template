@@ -119,8 +119,9 @@ from two different vendors, and then CodeRabbit's once it is marked ready:
 2. **Blind cross review**: `make cross-review`, with everything committed.
    The reviewer is the other vendor's agent: Codex when Claude wrote the
    change (the default), `make cross-review REVIEWER=claude` when Codex did.
-   No agent instructions or memory are loaded into it (Codex's own global
-   `AGENTS.md`, if one exists, is the exception the script warns about),
+   No agent instructions or memory are loaded into it (the exception is
+   what the user configured for Codex itself: a global `AGENTS.md`, which
+   the script warns about, or a `model_instructions_file`),
    and round 1 gets none of the author's reasoning, so it judges the change
    on its own. It runs where the reviewer CLIs and their logins are, never
    in L2. Codex's sandbox stops writes and the network but not reads: its

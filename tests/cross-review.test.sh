@@ -82,6 +82,17 @@ check "so does a failing MCP listing" 1 err "'codex mcp list --json' failed, so 
 STUB_MCP='[{"name": "a", "transport": {}}]' run "${script}"
 check "and one it cannot read" 1 err "could not read the MCP server names"
 
+git switch --quiet -c feat/instructions
+mkdir -p .codex
+printf 'model_instructions_file = "notes.md"\n' >.codex/config.toml
+git add .codex/config.toml
+git commit --quiet -m "chore: instructions"
+run "${script}"
+check "a checkout setting model_instructions_file is refused" 1 err \
+  "cross-review: a .codex/config.toml here sets model_instructions_file, which would reach the reviewer"
+git switch --quiet feat/topic
+git branch --quiet -D feat/instructions
+
 REVIEWER=gemini run "${script}"
 check "only codex or claude" 1 err "REVIEWER must be codex or claude, not 'gemini'"
 REVIEW_MAX_ROUNDS=0 run "${script}"

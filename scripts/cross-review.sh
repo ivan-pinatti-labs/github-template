@@ -217,8 +217,17 @@ The diff against ${base}:
 claude_settings='{"claudeMdExcludes":["**/CLAUDE.md","**/CLAUDE.local.md","**/AGENTS.md","**/rules/**"],"autoMemoryEnabled":false,"disableClaudeAiConnectors":true}'
 
 if [[ "${reviewer}" == codex ]]; then
+  # model_instructions_file replaces Codex's whole base prompt, so it cannot
+  # be cleared on the command line the way developer_instructions is. A
+  # checkout that sets it (in a .codex/config.toml Codex loads once the
+  # project is trusted) is refused.
+  if git grep --quiet --extended-regexp '^[[:space:]]*model_instructions_file[[:space:]]*=' \
+    HEAD -- ':(glob)**/.codex/config.toml'; then
+    die "a .codex/config.toml here sets model_instructions_file, which would reach the reviewer"
+  fi
   # project_doc_max_bytes covers the repository's AGENTS.md files. Codex's
-  # own global one, in its home folder, is the user's to keep out.
+  # own global one, in its home folder, is the user's to keep out, as is a
+  # model_instructions_file in the user's own Codex config.
   for global in "${CODEX_HOME:-${HOME}/.codex}"/AGENTS{,.override}.md; do
     if [[ -e "${global}" ]]; then
       echo "cross-review: ${global} exists and may still reach the reviewer; the review is not fully blind" >&2
