@@ -98,6 +98,7 @@ check "the answer is printed" 0 out "All good."
 check "and saved" 0 "${records}/round-1-codex.md" "All good."
 check "codex runs read only" 0 calls "codex exec --sandbox read-only --skip-git-repo-check --ephemeral"
 check "with no AGENTS.md loaded" 0 calls "-c project_doc_max_bytes=0"
+check "and no configured instructions" 0 calls '-c developer_instructions=""'
 refute "no MCP server to switch off" calls "mcp_servers."
 check "no tool bearing feature" 0 calls "--disable apps --disable plugins"
 check "at the default effort" 0 calls 'model_reasoning_effort="medium"'

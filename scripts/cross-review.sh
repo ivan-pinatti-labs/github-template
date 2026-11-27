@@ -203,8 +203,11 @@ The diff against ${base}:
 "
 
 # What keeps the reviewers blind is configuration, not a copy of the tree.
-# Codex loads no AGENTS.md with project_doc_max_bytes=0, no memory with
-# memories off, and no MCP server with each one configured switched off. Claude Code skips every CLAUDE.md, AGENTS.md and rules file,
+# Codex loads no AGENTS.md with project_doc_max_bytes=0, none of the
+# developer_instructions a Codex config file (the user's, or a trusted
+# project's .codex/config.toml) may carry, since an override on the command
+# line wins over every file, no memory with memories off, and no MCP server
+# with each one configured switched off. Claude Code skips every CLAUDE.md, AGENTS.md and rules file,
 # project or user, through claudeMdExcludes, and its auto memory. Prompt and
 # diff go on stdin: a single argument is capped at 128 KiB on Linux, and
 # Claude Code's --tools takes every word after it, a positional prompt
@@ -237,6 +240,7 @@ codex)
     --cd "${top}" --output-last-message "${out}.partial"
     -c "model_reasoning_effort=\"${codex_effort}\""
     -c project_doc_max_bytes=0
+    -c 'developer_instructions=""'
     -c 'web_search="disabled"'
     ${mcp_off[@]+"${mcp_off[@]}"})
   # No memory, and no tool that reaches the network or other programs:
