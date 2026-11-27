@@ -69,6 +69,11 @@ echo two >>file.txt
 run "${script}"
 check "refuses uncommitted changes" 1 err "cross-review: uncommitted changes"
 git commit --quiet -am "feat: second"
+git config status.showUntrackedFiles no
+touch helper.txt
+run "${script}"
+check "refuses untracked files, however status shows them" 1 err "cross-review: uncommitted changes"
+rm helper.txt
 # A submodule update, which diff.ignoreSubmodules would otherwise hide.
 git update-index --add --cacheinfo "160000,$(git rev-parse HEAD),vendored"
 git commit --quiet -m "feat: vendor a submodule"

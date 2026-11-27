@@ -146,7 +146,9 @@ review_diff() {
 }
 
 # Commits only, so the review sees exactly what the pull request will carry.
-if [[ -n "$(git status --porcelain)" ]]; then
+# Whatever status.showUntrackedFiles says: an untracked file the reviewer
+# can read would not be in the pull request.
+if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
   die "uncommitted changes: commit (or set aside) everything first"
 fi
 if review_diff --quiet; then
