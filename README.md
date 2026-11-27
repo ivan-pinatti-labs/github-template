@@ -112,6 +112,12 @@ time setup its documentation describes. Without it:
   only the working tree. `make claude` and `make codex` start it from an
   ordinary terminal, and `make unlock` unlocks the ssh key for `git push`. See
   [.devcontainer/README.md](.devcontainer/README.md).
+- **A blind cross review before every pull request**: `make cross-review`
+  has the other vendor's agent (Codex for Claude's work, Claude for Codex's)
+  review the branch with no agent instructions or memory loaded, in rounds
+  until it finds nothing new. [AGENTS.md](AGENTS.md) has the flow and
+  [scripts/cross-review.sh](scripts/cross-review.sh) the details; `make test`
+  runs its tests, which the pre-commit hooks run too.
 - **Issue and pull request templates**, a stale-issue policy, a
   `CODEOWNERS` file, and a `FUNDING.yml`, all under
   [.github/](.github/).
@@ -124,7 +130,8 @@ time setup its documentation describes. Without it:
 
 This repository is meant to be generic and language-agnostic, so it does
 not bake in any one project type's tooling: no language-specific linter
-configuration, no build system, no test runner, no Renovate manager beyond
+configuration, no build system, no test runner beyond the plain bash one for
+its own script (`make test`), no Renovate manager beyond
 `github-actions`, `pre-commit` and `dockerfile`, and no `dependabot.yml`
 ecosystem beyond `pre-commit` and `github-actions` (both present but
 disabled; see "What you get" above). Once you know what the new project is

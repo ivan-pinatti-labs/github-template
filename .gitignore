@@ -29,3 +29,7 @@ CLAUDE.local.md
 .claude/settings.local.json
 .claude/agents/local/
 .claude/worktrees/
+
+# Rounds of `make cross-review` (scripts/cross-review.sh), kept in the main
+# checkout and shared by its worktrees
+.cross-review/

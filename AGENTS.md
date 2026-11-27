@@ -109,6 +109,35 @@ comments, commit messages or pull request text. Use commas, parentheses or
 separate sentences. Hyphens inside compound words and in code, paths, flags
 and identifiers are fine.
 
+### Review before a pull request
+
+Every change gets two reviews before its pull request is opened, by agents
+from two different vendors, and then CodeRabbit's once it is marked ready:
+
+1. **Self review by the author.** Claude Code runs `/code-review`; Codex runs
+   `/review`. Fix what holds up.
+2. **Blind cross review**: `make cross-review`, with everything committed.
+   The reviewer is the other vendor's agent: Codex when Claude wrote the
+   change (the default), `make cross-review REVIEWER=claude` when Codex did.
+   No agent instructions or memory are loaded into it, and round 1 gets none
+   of the author's reasoning, so it judges the change on its own. It runs
+   where the reviewer CLIs and their logins are, never in L2.
+3. **Answer every finding.** Fix it and commit, or decline it with the
+   reason in `.cross-review/<branch>/declined.md` (in the main checkout,
+   shared by every worktree, gitignored). Run `make cross-review` again, and
+   repeat until a round ends `VERDICT: CLEAN`. Later rounds see
+   `declined.md`, reasons included. After `REVIEW_MAX_ROUNDS` rounds
+   (default 3), clean or not, it stops, and whatever is still open goes to a
+   person.
+4. **Record it in the pull request**: a short "Review" section listing the
+   rounds, what was fixed, and what was declined and why.
+
+Model and effort are set explicitly to keep token use bounded:
+`CODEX_EFFORT` (default `medium`), `CODEX_MODEL` (default: the Codex
+config's), `CLAUDE_REVIEW_MODEL` (default `opus`) and `CLAUDE_REVIEW_EFFORT`
+(default `medium`). Raise the effort for a risky change.
+`scripts/cross-review.sh` documents the rest, exit statuses included.
+
 ### Commits and pull requests
 
 - Conventional Commits with an imperative subject. Branch names are lowercase
