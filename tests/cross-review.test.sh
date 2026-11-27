@@ -12,7 +12,8 @@ script=scripts/cross-review.sh
 # The script's own settings, as the caller may have them exported: each
 # case below sets what it needs.
 unset REVIEWER REVIEW_BASE REVIEW_DIR REVIEW_MAX_ROUNDS REVIEW_FORCE \
-  CODEX CODEX_MODEL CODEX_EFFORT CLAUDE CLAUDE_REVIEW_MODEL CLAUDE_REVIEW_EFFORT
+  CODEX CODEX_MODEL CODEX_EFFORT CLAUDE CLAUDE_REVIEW_MODEL CLAUDE_REVIEW_EFFORT \
+  CLAUDE_MANAGED_MD
 export STUB_STDIN="${__scratch}/stdin"
 
 # The bodies expand when the stubs run, not here.
@@ -37,8 +38,8 @@ printf "%s" "${STUB_ANSWER:-}"'
 export HOME="${__scratch}/home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
 unset XDG_CONFIG_HOME CODEX_HOME
 mkdir -p "${HOME}"
-export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=test@example.com
-export GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=test@example.com
+export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=0+test@users.noreply.github.com
+export GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=0+test@users.noreply.github.com
 git init --quiet --bare --initial-branch=main "${__scratch}/origin.git"
 git clone --quiet "${__scratch}/origin.git" "${__scratch}/work" 2>/dev/null
 work="${__scratch}/work"
@@ -122,6 +123,11 @@ git remote add upstream "${__scratch}/origin.git"
 REVIEW_BASE=upstream/main REVIEW_DIR="${__scratch}/upstream" STUB_ANSWER="VERDICT: CLEAN" run "${script}"
 check "a base on another remote is fetched first" 0 err "codex reviewing feat/topic against upstream/main"
 git remote remove upstream
+git remote set-url origin "${__scratch}/missing.git"
+REVIEW_DIR="${__scratch}/offline" STUB_ANSWER="VERDICT: CLEAN" run "${script}"
+check "a base that cannot be fetched is used as it is" 0 err "cross-review: could not fetch origin/main, using the local copy"
+check "and the review still runs" 0 err "saved to ${__scratch}/offline/feat/topic/round-1-codex.md"
+git remote set-url origin "${__scratch}/origin.git"
 
 REVIEWER=gemini run "${script}"
 check "only codex or claude" 1 err "REVIEWER must be codex or claude, not 'gemini'"
@@ -189,13 +195,18 @@ rm -rf "${work}/.cross-review"
 STUB_ANSWER="VERDICT: CLEAN" run "${script}"
 check "a global Codex AGENTS.md is warned about" 0 err "cross-review: ${HOME}/.codex/AGENTS.md exists and may still reach the reviewer"
 rm -rf "${HOME}/.codex" "${work}/.cross-review"
-REVIEWER=claude CLAUDE_REVIEW_MODEL=sonnet STUB_ANSWER=$'Fine.\nVERDICT: CLEAN' run "${script}"
+REVIEWER=claude CLAUDE_MANAGED_MD="${__scratch}/none" CLAUDE_REVIEW_MODEL=sonnet STUB_ANSWER=$'Fine.\nVERDICT: CLEAN' run "${script}"
 check "claude reviews too" 0 err "saved to ${records}/round-1-claude.md"
 check "restricted, three read only tools" 0 calls "claude -p --restricted --strict-mcp-config --tools Read,Grep,Glob --model sonnet --effort medium"
 check "with no instruction files" 0 calls '"claudeMdExcludes":["**/CLAUDE.md","**/CLAUDE.local.md","**/AGENTS.md","**/rules/**"]'
 check "no auto memory, no connectors" 0 calls '"autoMemoryEnabled":false,"disableClaudeAiConnectors":true'
 check "without asking" 0 calls "--permission-mode dontAsk"
 check "the diff on stdin" 0 "${STUB_STDIN}" "+two"
+refute "no managed CLAUDE.md, no warning" err "managed CLAUDE.md"
+touch "${__scratch}/managed.md"
+REVIEWER=claude CLAUDE_MANAGED_MD="${__scratch}/managed.md" REVIEW_DIR="${__scratch}/managed" STUB_ANSWER="VERDICT: CLEAN" run "${script}"
+check "a managed CLAUDE.md is warned about" 0 err \
+  "cross-review: ${__scratch}/managed.md is a managed CLAUDE.md, which reaches the reviewer; the review is not fully blind"
 REVIEWER=claude STUB_ANSWER= run "${script}"
 check "an empty claude answer too" 6 err "cross-review: claude exited 0 but wrote no answer; nothing saved for round 2"
 REVIEWER=claude STUB_EXIT=1 run "${script}"

@@ -59,6 +59,8 @@
 #   CLAUDE                Claude Code command (default claude)
 #   CLAUDE_REVIEW_MODEL   Claude model (default opus)
 #   CLAUDE_REVIEW_EFFORT  Claude effort (default medium)
+#   CLAUDE_MANAGED_MD     the managed CLAUDE.md to warn about (default: the
+#                         Linux and macOS policy paths)
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -241,6 +243,19 @@ if [[ "${reviewer}" == codex ]]; then
   for global in "${CODEX_HOME:-${HOME}/.codex}"/AGENTS{,.override}.md; do
     if [[ -e "${global}" ]]; then
       echo "cross-review: ${global} exists and may still reach the reviewer; the review is not fully blind" >&2
+    fi
+  done
+else
+  # claudeMdExcludes cannot exclude a managed (organization policy)
+  # CLAUDE.md, which every Claude Code session on the machine loads.
+  if [[ -n "${CLAUDE_MANAGED_MD:-}" ]]; then
+    managed_mds=("${CLAUDE_MANAGED_MD}")
+  else
+    managed_mds=(/etc/claude-code/CLAUDE.md "/Library/Application Support/ClaudeCode/CLAUDE.md")
+  fi
+  for managed in "${managed_mds[@]}"; do
+    if [[ -e "${managed}" ]]; then
+      echo "cross-review: ${managed} is a managed CLAUDE.md, which reaches the reviewer; the review is not fully blind" >&2
     fi
   done
 fi
