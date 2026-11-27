@@ -93,7 +93,15 @@ git add .codex/config.toml
 git commit --quiet -m "chore: instructions"
 run "${script}"
 check "a checkout with a Codex config is refused, however it spells a key" 1 err \
-  "cross-review: this checkout tracks a .codex/config.toml, which could steer the reviewer; review without it"
+  "cross-review: this checkout has a .codex folder or config, which could steer the reviewer; review without it"
+git rm --quiet -r .codex
+mkdir -p review-config
+printf 'model_instructions_file = "notes.md"\n' >review-config/config.toml
+ln -s review-config .codex
+git add review-config .codex
+git commit --quiet -m "chore: instructions through a link"
+run "${script}"
+check "so is one reached through a symlink" 1 err "cross-review: this checkout has a .codex folder or config"
 git switch --quiet feat/topic
 git branch --quiet -D feat/instructions
 

@@ -224,8 +224,13 @@ if [[ "${reviewer}" == codex ]]; then
   # and cannot be cleared on the command line, or anything else that
   # reaches the reviewer. TOML spells a key many ways (quoted, escaped,
   # under a profile), so any such file is refused rather than parsed.
-  if [[ -n "$(git ls-files -- ':(glob)**/.codex/config.toml')" ]]; then
-    die "this checkout tracks a .codex/config.toml, which could steer the reviewer; review without it"
+  #
+  # Codex reads it from .codex at the top of the checkout, which may be a
+  # directory, a symlink to one elsewhere, or untracked and ignored, so the
+  # path itself is checked as well as what git tracks anywhere.
+  if [[ -e "${top}/.codex" || -L "${top}/.codex" ]] ||
+    [[ -n "$(git ls-files -- ':(glob)**/.codex/config.toml')" ]]; then
+    die "this checkout has a .codex folder or config, which could steer the reviewer; review without it"
   fi
   # project_doc_max_bytes covers the repository's AGENTS.md files. Codex's
   # own global one, in its home folder, is the user's to keep out, as is a
