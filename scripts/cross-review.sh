@@ -206,8 +206,10 @@ The diff against ${base}:
 # Codex loads no AGENTS.md with project_doc_max_bytes=0, none of the
 # developer_instructions a Codex config file (the user's, or a trusted
 # project's .codex/config.toml) may carry, since an override on the command
-# line wins over every file, no memory with memories off, and no MCP server
-# with each one configured switched off. Claude Code skips every CLAUDE.md, AGENTS.md and rules file,
+# line wins over every file, no skill (the user's, or one a repository
+# carries under .agents/skills) with skills.include_instructions off, no
+# memory with memories off, and no MCP server with each one configured
+# switched off. Claude Code skips every CLAUDE.md, AGENTS.md and rules file,
 # project or user, through claudeMdExcludes, and its auto memory. Prompt and
 # diff go on stdin: a single argument is capped at 128 KiB on Linux, and
 # Claude Code's --tools takes every word after it, a positional prompt
@@ -241,6 +243,7 @@ codex)
     -c "model_reasoning_effort=\"${codex_effort}\""
     -c project_doc_max_bytes=0
     -c 'developer_instructions=""'
+    -c skills.include_instructions=false
     -c 'web_search="disabled"'
     ${mcp_off[@]+"${mcp_off[@]}"})
   # No memory, and no tool that reaches the network or other programs:
