@@ -159,6 +159,14 @@ repos:
       - id: checklist-dev-make
         stages: [pre-commit]
 
+      # check-executables-have-shebangs, check-shebang-scripts-are-executable,
+      # shellcheck --severity=error, shfmt --indent 2 --write. Scoped to
+      # scripts/ and tests/, where the shell lives: scripts/cross-review.sh
+      # and its tests. Widen it as the new repository adds shell elsewhere.
+      - id: checklist-dev-shell
+        files: ^(scripts|tests)/
+        stages: [pre-commit]
+
   # CITATION.cff is the one file here that no checklist reaches. It is YAML,
   # but `identify` tags it only `text`, since the tag comes from the extension
   # and `.cff` is not one it knows. Widening checklist-yaml's `types:`
@@ -179,6 +187,19 @@ repos:
         name: yamllint (CITATION.cff)
         files: ^CITATION\.cff$
         types: [text]
+        stages: [pre-commit]
+
+  # The tests under tests/ (make test), whenever a script or a test changes.
+  # Plain bash and git, so they run wherever the hooks do, CI's Pre-commit
+  # job included, and need no required check of their own.
+  - repo: local
+    hooks:
+      - id: shell-tests
+        name: Shell tests (tests/*.test.sh)
+        language: system
+        entry: make test
+        files: ^(scripts|tests)/
+        pass_filenames: false
         stages: [pre-commit]
 
   # The other half of that check, commented out because it cannot pass here.

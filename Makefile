@@ -6,7 +6,7 @@
 # one line. Splitting one across lines leaves the trailing targets invisible
 # to it, and the phonydeclared and minphony rules then report them as
 # undeclared. Tracked upstream as checkmake#280.
-.PHONY: all help workbench-help
+.PHONY: all help workbench-help cross-review test
 
 # Bare `make` shows the target list rather than doing something surprising.
 # checkmake's minphony rule also wants `all` declared phony; see checkmake.ini.
@@ -34,5 +34,18 @@ help:
 		'' \
 		'Targets:' \
 		'  help                        Show this message.' \
+		'  cross-review                Blind review of this branch by the other vendor'"'"'s agent' \
+		'                              (REVIEWER=codex|claude; AGENTS.md, "Review before a pull request").' \
+		'  test                        Run the tests under tests/.' \
 		''
 	@$(MAKE) --no-print-directory workbench-help
+
+# Runs where the reviewer CLIs and their logins are, never in L2: the
+# reviewer needs the network and its own credentials. scripts/cross-review.sh
+# documents its settings and exit statuses.
+cross-review:
+	scripts/cross-review.sh
+
+# Every tests/*.test.sh, each as its own bash process.
+test:
+	@status=0; for t in tests/*.test.sh; do echo "== $$t"; bash "$$t" || status=1; done; exit $$status
