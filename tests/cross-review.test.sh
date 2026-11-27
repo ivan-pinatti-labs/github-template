@@ -74,10 +74,18 @@ touch helper.txt
 run "${script}"
 check "refuses untracked files, however status shows them" 1 err "cross-review: uncommitted changes"
 rm helper.txt
-# A submodule update, which diff.ignoreSubmodules would otherwise hide.
-git update-index --add --cacheinfo "160000,$(git rev-parse HEAD),vendored"
-git commit --quiet -m "feat: vendor a submodule"
+
+# A submodule, whose updates and changes diff.ignoreSubmodules would
+# otherwise hide.
+git init --quiet --initial-branch=main "${__scratch}/lib"
+git -C "${__scratch}/lib" commit --quiet --allow-empty -m "feat: lib"
+git -c protocol.file.allow=always submodule --quiet add "${__scratch}/lib" lib
+git commit --quiet -m "feat: add lib"
 git config diff.ignoreSubmodules all
+touch lib/dirty.txt
+run "${script}"
+check "and changes inside a submodule, however they are ignored" 1 err "cross-review: uncommitted changes"
+rm lib/dirty.txt
 
 # What `codex mcp list --json` prints, trimmed to what the script reads.
 mcp_entry() {
