@@ -9,6 +9,10 @@
 source "$(dirname "${BASH_SOURCE[0]}")/shell-test-lib.sh"
 
 script=scripts/cross-review.sh
+# The script's own settings, as the caller may have them exported: each
+# case below sets what it needs.
+unset REVIEWER REVIEW_BASE REVIEW_DIR REVIEW_MAX_ROUNDS REVIEW_FORCE \
+  CODEX CODEX_MODEL CODEX_EFFORT CLAUDE CLAUDE_REVIEW_MODEL CLAUDE_REVIEW_EFFORT
 export STUB_STDIN="${__scratch}/stdin"
 
 # The bodies expand when the stubs run, not here.
