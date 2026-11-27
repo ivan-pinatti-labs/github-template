@@ -84,12 +84,12 @@ check "and one it cannot read" 1 err "could not read the MCP server names"
 
 git switch --quiet -c feat/instructions
 mkdir -p .codex
-printf 'model_instructions_file = "notes.md"\n' >.codex/config.toml
+printf '"model_instructions_file" = "notes.md"\n' >.codex/config.toml
 git add .codex/config.toml
 git commit --quiet -m "chore: instructions"
 run "${script}"
-check "a checkout setting model_instructions_file is refused" 1 err \
-  "cross-review: a .codex/config.toml here sets model_instructions_file, which would reach the reviewer"
+check "a checkout with a Codex config is refused, however it spells a key" 1 err \
+  "cross-review: this checkout tracks a .codex/config.toml, which could steer the reviewer; review without it"
 git switch --quiet feat/topic
 git branch --quiet -D feat/instructions
 

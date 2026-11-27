@@ -217,13 +217,13 @@ The diff against ${base}:
 claude_settings='{"claudeMdExcludes":["**/CLAUDE.md","**/CLAUDE.local.md","**/AGENTS.md","**/rules/**"],"autoMemoryEnabled":false,"disableClaudeAiConnectors":true}'
 
 if [[ "${reviewer}" == codex ]]; then
-  # model_instructions_file replaces Codex's whole base prompt, so it cannot
-  # be cleared on the command line the way developer_instructions is. A
-  # checkout that sets it (in a .codex/config.toml Codex loads once the
-  # project is trusted) is refused.
-  if git grep --quiet --extended-regexp '^[[:space:]]*model_instructions_file[[:space:]]*=' \
-    HEAD -- ':(glob)**/.codex/config.toml'; then
-    die "a .codex/config.toml here sets model_instructions_file, which would reach the reviewer"
+  # A Codex config in the checkout (loaded once the project is trusted) can
+  # set model_instructions_file, which replaces Codex's whole base prompt
+  # and cannot be cleared on the command line, or anything else that
+  # reaches the reviewer. TOML spells a key many ways (quoted, escaped,
+  # under a profile), so any such file is refused rather than parsed.
+  if [[ -n "$(git ls-files -- ':(glob)**/.codex/config.toml')" ]]; then
+    die "this checkout tracks a .codex/config.toml, which could steer the reviewer; review without it"
   fi
   # project_doc_max_bytes covers the repository's AGENTS.md files. Codex's
   # own global one, in its home folder, is the user's to keep out, as is a
