@@ -7,7 +7,7 @@
 # what Claude wrote (the default), Claude reviews what Codex wrote
 # (REVIEWER=claude). It runs blind and in place: it reads the diff and the
 # code around it, but no agent instruction file (AGENTS.md, CLAUDE.md,
-# rules) and no auto memory is loaded into it, and round 1 gets none of the
+# rules) and no memory is loaded into it, and round 1 gets none of the
 # author's reasoning. The files are still in the checkout and a reviewer
 # could open them; blind means not loaded, not hidden.
 #
@@ -29,8 +29,9 @@
 #   4  the answer has no verdict line
 #   5  the round limit is reached: hand what is open to a person
 #   6  the reviewer exited 0 but wrote no answer
-#   anything else: the failing command's own status (a reviewer CLI, git)
-# Only a finished round counts toward the limit. An interrupted one stays as
+#   7  the reviewer failed (its own status is in the message)
+#   anything else: a git command's own status
+# Only a finished round counts toward the limit; a failed one leaves at most
 # round-N-<reviewer>.md.partial. Deleting $REVIEW_DIR/<branch> starts over.
 #
 # Environment (all optional):
@@ -38,7 +39,9 @@
 #   REVIEW_BASE           base to diff against (default origin/main, fetched
 #                         first when it is a remote branch)
 #   REVIEW_DIR            where rounds are saved (default .cross-review in the
-#                         main checkout, gitignored, shared by its worktrees)
+#                         main checkout, gitignored, shared by its worktrees).
+#                         Inside the checkout it has to be gitignored, or the
+#                         next round finds the tree dirty
 #   REVIEW_MAX_ROUNDS     stop after this many rounds (default 3); every
 #                         round counts, clean or not, as a token budget
 #   REVIEW_FORCE=1        run past REVIEW_MAX_ROUNDS anyway
@@ -76,10 +79,18 @@ esac
   die "REVIEW_MAX_ROUNDS must be a positive integer, not '${max_rounds}'"
 
 top="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git repository"
+# A relative REVIEW_DIR means relative to where it was asked for, not to
+# the top of the checkout this script moves to next.
+review_root="${REVIEW_DIR:-}"
+if [[ -n "${review_root}" && "${review_root}" != /* ]]; then
+  review_root="${PWD}/${review_root}"
+fi
 cd "${top}"
-# The main checkout, not this worktree: the record outlives the worktree.
-common="$(git rev-parse --path-format=absolute --git-common-dir)"
-review_root="${REVIEW_DIR:-$(dirname "${common}")/.cross-review}"
+if [[ -z "${review_root}" ]]; then
+  # The main checkout, not this worktree: the record outlives the worktree.
+  main="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
+  review_root="${main:-${top}}/.cross-review"
+fi
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
 case "${branch}" in
@@ -100,11 +111,17 @@ fi
 git rev-parse --verify --quiet "${base}^{commit}" >/dev/null ||
   die "base '${base}' not found"
 
+# A plain unified diff, whatever the user's git config says about color,
+# external diff tools or path prefixes.
+review_diff() {
+  git diff --no-color --no-ext-diff --src-prefix=a/ --dst-prefix=b/ "$@" "${base}...HEAD"
+}
+
 # Commits only, so the review sees exactly what the pull request will carry.
 if [[ -n "$(git status --porcelain)" ]]; then
   die "uncommitted changes: commit (or set aside) everything first"
 fi
-if git diff --quiet "${base}...HEAD"; then
+if review_diff --quiet; then
   die "no changes between ${base} and ${branch}"
 fi
 
@@ -154,16 +171,33 @@ The diff against ${base}:
 "
 
 # What keeps the reviewers blind is configuration, not a copy of the tree.
-# Codex loads no AGENTS.md with project_doc_max_bytes=0, and no MCP server.
-# Claude Code skips every CLAUDE.md, AGENTS.md and rules file, project or
-# user, through claudeMdExcludes, and its auto memory. Prompt and diff go on
-# stdin: a single argument is capped at 128 KiB on Linux, and Claude Code's
-# --tools takes every word after it, a positional prompt included.
+# Codex loads no AGENTS.md with project_doc_max_bytes=0, and no memory with
+# memories off. Claude Code skips every CLAUDE.md, AGENTS.md and rules file,
+# project or user, through claudeMdExcludes, and its auto memory. Prompt and
+# diff go on stdin: a single argument is capped at 128 KiB on Linux, and
+# Claude Code's --tools takes every word after it, a positional prompt
+# included.
 claude_settings='{"claudeMdExcludes":["**/CLAUDE.md","**/CLAUDE.local.md","**/AGENTS.md","**/rules/**"],"autoMemoryEnabled":false,"disableClaudeAiConnectors":true}'
 
-echo "cross-review: round ${round} of ${max_rounds}, ${reviewer} reviewing ${branch} against ${base}" >&2
+if [[ "${reviewer}" == codex ]]; then
+  # project_doc_max_bytes covers the repository's AGENTS.md files. Codex's
+  # own global one, in its home folder, is the user's to keep out.
+  for global in "${CODEX_HOME:-${HOME}/.codex}"/AGENTS{,.override}.md; do
+    if [[ -e "${global}" ]]; then
+      echo "cross-review: ${global} exists and may still reach the reviewer; the review is not fully blind" >&2
+    fi
+  done
+fi
+
+if [[ "${round}" -gt "${max_rounds}" ]]; then
+  of="past the limit of ${max_rounds} (REVIEW_FORCE=1)"
+else
+  of="of ${max_rounds}"
+fi
+echo "cross-review: round ${round} ${of}, ${reviewer} reviewing ${branch} against ${base}" >&2
 
 rm -f "${out}.partial"
+status=0
 case "${reviewer}" in
 codex)
   # `codex review --base` takes no prompt of its own, so this is exec.
@@ -171,14 +205,16 @@ codex)
     --cd "${top}" --output-last-message "${out}.partial"
     -c "model_reasoning_effort=\"${codex_effort}\""
     -c project_doc_max_bytes=0
-    -c 'mcp_servers={}')
-  # Plugins and apps bring tools of their own, outside mcp_servers, and
-  # the read only sandbox constrains the shell only, so every feature that
-  # brings tools is off. Hooks stay on: that is where a command guard
-  # lives.
-  for feature in apps plugins remote_plugin browser_use browser_use_external \
-    browser_use_full_cdp_access computer_use image_generation \
-    skill_mcp_dependency_install in_app_local_automation in_app_browser; do
+    -c 'mcp_servers={}'
+    -c 'web_search="disabled"')
+  # No memory, and no tool that reaches past this checkout: web search
+  # (above), MCP servers (above), apps, plugins, the browser and computer
+  # use. Its shell stays, inside the read only sandbox, to read the code.
+  # Hooks stay on: that is where a command guard lives.
+  for feature in memories external_agent_memory_import apps plugins \
+    remote_plugin browser_use browser_use_external browser_use_full_cdp_access \
+    computer_use image_generation skill_mcp_dependency_install \
+    in_app_local_automation in_app_browser; do
     codex_args+=(--disable "${feature}")
   done
   if [[ -n "${CODEX_MODEL:-}" ]]; then
@@ -187,16 +223,9 @@ codex)
   # shellcheck disable=SC2086 # the command may carry a wrapper
   {
     printf '%s\n' "${prompt}"
-    git diff "${base}...HEAD"
+    review_diff
   } |
-    ${codex_cmd} "${codex_args[@]}" - >&2
-  if [[ ! -s "${out}.partial" ]]; then
-    echo "cross-review: ${reviewer} exited 0 but wrote no answer; nothing saved for round ${round}" >&2
-    rm -f "${out}.partial"
-    exit 6
-  fi
-  cat "${out}.partial"
-  echo
+    ${codex_cmd} "${codex_args[@]}" - >&2 || status=$?
   ;;
 claude)
   # --restricted: no Bash or other tool that runs code, no web, file tools
@@ -208,21 +237,27 @@ claude)
   # shellcheck disable=SC2086 # the command may carry a wrapper
   {
     printf '%s\n' "${prompt}"
-    git diff "${base}...HEAD"
+    review_diff
   } |
     ${claude_cmd} -p --restricted --strict-mcp-config \
       --tools "Read,Grep,Glob" \
       --model "${claude_model}" --effort "${claude_effort}" \
       --settings "${claude_settings}" \
-      --permission-mode dontAsk | tee "${out}.partial"
-  if [[ ! -s "${out}.partial" ]]; then
-    echo "cross-review: ${reviewer} exited 0 but wrote no answer; nothing saved for round ${round}" >&2
-    rm -f "${out}.partial"
-    exit 6
-  fi
+      --permission-mode dontAsk >"${out}.partial" || status=$?
   ;;
 esac
+if [[ "${status}" -ne 0 ]]; then
+  echo "cross-review: ${reviewer} failed with status ${status}; round ${round} not counted" >&2
+  exit 7
+fi
+if [[ ! -s "${out}.partial" ]]; then
+  echo "cross-review: ${reviewer} exited 0 but wrote no answer; nothing saved for round ${round}" >&2
+  rm -f "${out}.partial"
+  exit 6
+fi
 mv "${out}.partial" "${out}"
+cat "${out}"
+echo
 
 # Only the last non-empty line counts, so a verdict quoted earlier in the
 # answer cannot pass for one. Models dress it up (**VERDICT: CLEAN**,

@@ -29,7 +29,8 @@ cat >"${STUB_STDIN}"
 printf "%s" "${STUB_ANSWER:-}"'
 
 # A git of its own: no user or system configuration, hooks or signing.
-export HOME="${__scratch}/home" GIT_CONFIG_NOSYSTEM=1
+export HOME="${__scratch}/home" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
+unset XDG_CONFIG_HOME CODEX_HOME
 mkdir -p "${HOME}"
 export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=test@example.com
 export GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=test@example.com
@@ -44,6 +45,9 @@ git commit --quiet -m "feat: first"
 git push --quiet origin main
 records="${work}/.cross-review/feat/topic"
 printf '.cross-review/\n' >>.git/info/exclude
+# Whatever the user's config says, the reviewer gets a plain diff.
+git config color.ui always
+git config diff.noprefix true
 
 run "${script}"
 check "refuses main" 1 err "cross-review: on main: review runs on a topic branch"
@@ -79,6 +83,11 @@ check "no tool bearing feature" 0 calls "--disable apps --disable plugins"
 check "at the default effort" 0 calls 'model_reasoning_effort="medium"'
 refute "and the Codex config's model" calls "model=\""
 check "the diff reaches it on stdin" 0 "${STUB_STDIN}" "+two"
+check "as a plain unified diff" 0 "${STUB_STDIN}" "+++ b/file.txt"
+refute "with no color" "${STUB_STDIN}" $'\e['
+check "web search off" 0 calls 'web_search="disabled"'
+check "memories off" 0 calls "--disable memories --disable external_agent_memory_import"
+refute "no warning without a global AGENTS.md" err "may still reach the reviewer"
 check "after the prompt" 0 "${STUB_STDIN}" "Be adversarial"
 refute "nothing declined yet" "${STUB_STDIN}" "declined them"
 
@@ -94,15 +103,21 @@ check "declined findings are fed back" 4 "${STUB_STDIN}" "two is intended."
 
 run "${script}"
 check "the round limit stops it" 5 err "cross-review: 3 rounds done on feat/topic (REVIEW_MAX_ROUNDS=3)."
-REVIEW_MAX_ROUNDS=4 STUB_EXIT=7 run "${script}"
-check "a failing reviewer exits with its status" 7 err "round 4 of 4"
+REVIEW_MAX_ROUNDS=4 STUB_EXIT=3 run "${script}"
+check "a failing reviewer has a status of its own" 7 err "cross-review: codex failed with status 3; round 4 not counted"
 assert "and its round is not counted" test ! -e "${records}/round-4-codex.md"
 REVIEW_FORCE=1 STUB_ANSWER= run "${script}"
+check "forcing past the limit says so" 6 err "round 4 past the limit of 3 (REVIEW_FORCE=1)"
 check "an empty answer has its own status" 6 err "cross-review: codex exited 0 but wrote no answer; nothing saved for round 4"
 assert "and is not counted" test ! -e "${records}/round-4-codex.md"
 assert "its stale partial is gone" test ! -e "${records}/round-4-codex.md.partial"
 
+mkdir -p "${HOME}/.codex"
+touch "${HOME}/.codex/AGENTS.md"
 rm -rf "${work}/.cross-review"
+STUB_ANSWER="VERDICT: CLEAN" run "${script}"
+check "a global Codex AGENTS.md is warned about" 0 err "cross-review: ${HOME}/.codex/AGENTS.md exists and may still reach the reviewer"
+rm -rf "${HOME}/.codex" "${work}/.cross-review"
 REVIEWER=claude CLAUDE_REVIEW_MODEL=sonnet STUB_ANSWER=$'Fine.\nVERDICT: CLEAN' run "${script}"
 check "claude reviews too" 0 err "saved to ${records}/round-1-claude.md"
 check "restricted, three read only tools" 0 calls "claude -p --restricted --strict-mcp-config --tools Read,Grep,Glob --model sonnet --effort medium"
@@ -112,6 +127,9 @@ check "without asking" 0 calls "--permission-mode dontAsk"
 check "the diff on stdin" 0 "${STUB_STDIN}" "+two"
 REVIEWER=claude STUB_ANSWER= run "${script}"
 check "an empty claude answer too" 6 err "cross-review: claude exited 0 but wrote no answer; nothing saved for round 2"
+REVIEWER=claude STUB_EXIT=1 run "${script}"
+check "a failing claude too" 7 err "cross-review: claude failed with status 1; round 2 not counted"
+assert "leaving only its partial" test -e "${records}/round-2-claude.md.partial"
 
 rm -rf "${work}/.cross-review"
 git worktree add --quiet -b feat/side "${work}/.claude/worktrees/side" feat/topic
@@ -121,9 +139,14 @@ STUB_ANSWER="VERDICT: CLEAN" run "${script}"
 check "a worktree's rounds go to the main checkout" 0 err "saved to ${work}/.cross-review/feat/side/round-1-codex.md"
 REVIEW_DIR="${__scratch}/elsewhere" STUB_ANSWER="VERDICT: CLEAN" run "${script}"
 check "unless REVIEW_DIR says otherwise" 0 err "saved to ${__scratch}/elsewhere/feat/side/round-1-codex.md"
+caller="${work}/.claude/worktrees/side/sub"
+mkdir -p "${caller}"
+(cd "${caller}" && REVIEW_DIR=rel STUB_ANSWER="VERDICT: CLEAN" run "${script}" && cp "${__scratch}/err" "${__scratch}/err.rel")
+check "a relative REVIEW_DIR is the caller's" 0 "${__scratch}/err.rel" "saved to ${caller}/rel/feat/side/round-1-codex.md"
 
-cd "${__scratch}"
-run "${__repo}/${script}"
+mkdir -p "${__scratch}/nowhere"
+cd "${__scratch}/nowhere"
+GIT_CEILING_DIRECTORIES="${__scratch}" run "${__repo}/${script}"
 check "outside a repository" 1 err "cross-review: not inside a git repository"
 
 finish
