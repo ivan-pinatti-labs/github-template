@@ -43,8 +43,8 @@
 #
 # Environment (all optional):
 #   REVIEWER              codex (default) or claude
-#   REVIEW_BASE           base to diff against (default origin/main, fetched
-#                         first when it is a remote branch)
+#   REVIEW_BASE           base to diff against (default origin/main), fetched
+#                         first when it names a branch of a configured remote
 #   REVIEW_DIR            where rounds are saved (default .cross-review in the
 #                         main checkout, gitignored, shared by its worktrees).
 #                         Inside the checkout it has to be gitignored, or the
@@ -129,17 +129,19 @@ if [[ "${reviewer}" == codex ]]; then
 fi
 
 # A stale remote base would put commits already merged into the review.
-if [[ "${base}" == origin/* ]]; then
-  git fetch --quiet origin "${base#origin/}" ||
+remote="${base%%/*}"
+if [[ "${base}" == */* ]] && git remote | grep --quiet --line-regexp --fixed-strings -- "${remote}"; then
+  git fetch --quiet "${remote}" "${base#*/}" ||
     echo "cross-review: could not fetch ${base}, using the local copy" >&2
 fi
 git rev-parse --verify --quiet "${base}^{commit}" >/dev/null ||
   die "base '${base}' not found"
 
 # A plain unified diff, whatever the user's git config says about color,
-# external diff tools, textconv filters or path prefixes.
+# external diff tools, textconv filters, ignored submodules or path prefixes.
 review_diff() {
-  git diff --no-color --no-ext-diff --no-textconv --src-prefix=a/ --dst-prefix=b/ \
+  git diff --no-color --no-ext-diff --no-textconv --ignore-submodules=none \
+    --src-prefix=a/ --dst-prefix=b/ \
     "$@" "${base}...HEAD"
 }
 

@@ -69,6 +69,10 @@ echo two >>file.txt
 run "${script}"
 check "refuses uncommitted changes" 1 err "cross-review: uncommitted changes"
 git commit --quiet -am "feat: second"
+# A submodule update, which diff.ignoreSubmodules would otherwise hide.
+git update-index --add --cacheinfo "160000,$(git rev-parse HEAD),vendored"
+git commit --quiet -m "feat: vendor a submodule"
+git config diff.ignoreSubmodules all
 
 # What `codex mcp list --json` prints, trimmed to what the script reads.
 mcp_entry() {
@@ -92,6 +96,11 @@ check "a checkout with a Codex config is refused, however it spells a key" 1 err
   "cross-review: this checkout tracks a .codex/config.toml, which could steer the reviewer; review without it"
 git switch --quiet feat/topic
 git branch --quiet -D feat/instructions
+
+git remote add upstream "${__scratch}/origin.git"
+REVIEW_BASE=upstream/main REVIEW_DIR="${__scratch}/upstream" STUB_ANSWER="VERDICT: CLEAN" run "${script}"
+check "a base on another remote is fetched first" 0 err "codex reviewing feat/topic against upstream/main"
+git remote remove upstream
 
 REVIEWER=gemini run "${script}"
 check "only codex or claude" 1 err "REVIEWER must be codex or claude, not 'gemini'"
@@ -119,6 +128,7 @@ check "the diff reaches it on stdin" 0 "${STUB_STDIN}" "+two"
 assert "the lock is released" test ! -e "${records}/.lock"
 check "as a plain unified diff" 0 "${STUB_STDIN}" "+++ b/file.txt"
 refute "with no color" "${STUB_STDIN}" $'\e['
+check "with submodule updates" 0 "${STUB_STDIN}" "+Subproject commit"
 check "web search off" 0 calls 'web_search="disabled"'
 check "memories off" 0 calls "--disable memories --disable external_agent_memory_import"
 refute "no warning without a global AGENTS.md" err "may still reach the reviewer"
