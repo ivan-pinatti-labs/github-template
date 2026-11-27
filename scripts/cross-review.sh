@@ -146,6 +146,12 @@ fi
 
 dir="${review_root}/${branch}"
 mkdir -p "${dir}"
+# One run at a time per branch, or two would pick the same round number.
+# mkdir is atomic; a run killed before its trap ran leaves the lock behind.
+lock="${dir}/.lock"
+mkdir "${lock}" 2>/dev/null ||
+  die "another cross-review is running on ${branch} (if none is, remove ${lock})"
+trap 'rmdir "${lock}" 2>/dev/null || true' EXIT
 rounds_done="$(find "${dir}" -maxdepth 1 -name 'round-*.md' | wc -l)"
 round=$((rounds_done + 1))
 if [[ "${round}" -gt "${max_rounds}" && "${REVIEW_FORCE:-0}" != 1 ]]; then

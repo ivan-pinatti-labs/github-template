@@ -99,6 +99,7 @@ check "no tool bearing feature" 0 calls "--disable apps --disable plugins"
 check "at the default effort" 0 calls 'model_reasoning_effort="medium"'
 refute "and the Codex config's model" calls "model=\""
 check "the diff reaches it on stdin" 0 "${STUB_STDIN}" "+two"
+assert "the lock is released" test ! -e "${records}/.lock"
 check "as a plain unified diff" 0 "${STUB_STDIN}" "+++ b/file.txt"
 refute "with no color" "${STUB_STDIN}" $'\e['
 check "web search off" 0 calls 'web_search="disabled"'
@@ -107,6 +108,10 @@ refute "no warning without a global AGENTS.md" err "may still reach the reviewer
 check "after the prompt" 0 "${STUB_STDIN}" "Be adversarial"
 refute "nothing declined yet" "${STUB_STDIN}" "declined them"
 
+mkdir "${records}/.lock"
+run "${script}"
+check "one run at a time per branch" 1 err "cross-review: another cross-review is running on feat/topic (if none is, remove ${records}/.lock)"
+rmdir "${records}/.lock"
 CODEX_MODEL=m1 CODEX_EFFORT=high STUB_MCP="${mcp_two}" STUB_ANSWER=$'1. file.txt:2 is wrong\nVERDICT: FINDINGS' run "${script}"
 check "round 2 findings" 3 err "cross-review: round 2 has findings, saved to ${records}/round-2-codex.md"
 check "the model is passed" 3 calls 'model="m1"'
