@@ -15,6 +15,7 @@ export STUB_STDIN="${__scratch}/stdin"
 # shellcheck disable=SC2016
 stub codex '
 [ "$1" = --version ] && exit 0
+if [ "$1" = mcp ]; then printf "%s" "${STUB_MCP:-[]}"; exit "${STUB_MCP_EXIT:-0}"; fi
 cat >"${STUB_STDIN}"
 [ -n "${STUB_EXIT:-}" ] && exit "${STUB_EXIT}"
 out= prev=
@@ -45,9 +46,12 @@ git commit --quiet -m "feat: first"
 git push --quiet origin main
 records="${work}/.cross-review/feat/topic"
 printf '.cross-review/\n' >>.git/info/exclude
-# Whatever the user's config says, the reviewer gets a plain diff.
+# Whatever the user's config says, the reviewer gets a plain diff: no
+# color, no prefixes dropped, and no textconv filter hiding the change.
 git config color.ui always
 git config diff.noprefix true
+git config diff.same.textconv "echo same #"
+printf 'file.txt diff=same\n' >>.git/info/attributes
 
 run "${script}"
 check "refuses main" 1 err "cross-review: on main: review runs on a topic branch"
@@ -61,6 +65,18 @@ echo two >>file.txt
 run "${script}"
 check "refuses uncommitted changes" 1 err "cross-review: uncommitted changes"
 git commit --quiet -am "feat: second"
+
+# What `codex mcp list --json` prints, trimmed to what the script reads.
+mcp_entry() {
+  printf '  {\n    "name": "%s",\n    "enabled": true,\n    "transport": {\n      "type": "stdio"\n    }\n  }' "${1}"
+}
+mcp_two="$(printf '[\n%s,\n%s\n]' "$(mcp_entry probe)" "$(mcp_entry other-one)")"
+STUB_MCP="$(printf '[\n%s\n]' "$(mcp_entry dotted.name)")" run "${script}"
+check "an MCP server it cannot switch off stops it" 1 err "MCP server 'dotted.name' cannot be switched off for the review; rename it"
+STUB_MCP_EXIT=1 run "${script}"
+check "so does a failing MCP listing" 1 err "'codex mcp list --json' failed, so its MCP servers cannot be switched off"
+STUB_MCP='[{"name": "a", "transport": {}}]' run "${script}"
+check "and one it cannot read" 1 err "could not read the MCP server names"
 
 REVIEWER=gemini run "${script}"
 check "only codex or claude" 1 err "REVIEWER must be codex or claude, not 'gemini'"
@@ -78,7 +94,7 @@ check "the answer is printed" 0 out "All good."
 check "and saved" 0 "${records}/round-1-codex.md" "All good."
 check "codex runs read only" 0 calls "codex exec --sandbox read-only --skip-git-repo-check --ephemeral"
 check "with no AGENTS.md loaded" 0 calls "-c project_doc_max_bytes=0"
-check "no MCP server" 0 calls "-c mcp_servers={}"
+refute "no MCP server to switch off" calls "mcp_servers."
 check "no tool bearing feature" 0 calls "--disable apps --disable plugins"
 check "at the default effort" 0 calls 'model_reasoning_effort="medium"'
 refute "and the Codex config's model" calls "model=\""
@@ -91,9 +107,11 @@ refute "no warning without a global AGENTS.md" err "may still reach the reviewer
 check "after the prompt" 0 "${STUB_STDIN}" "Be adversarial"
 refute "nothing declined yet" "${STUB_STDIN}" "declined them"
 
-CODEX_MODEL=m1 CODEX_EFFORT=high STUB_ANSWER=$'1. file.txt:2 is wrong\nVERDICT: FINDINGS' run "${script}"
+CODEX_MODEL=m1 CODEX_EFFORT=high STUB_MCP="${mcp_two}" STUB_ANSWER=$'1. file.txt:2 is wrong\nVERDICT: FINDINGS' run "${script}"
 check "round 2 findings" 3 err "cross-review: round 2 has findings, saved to ${records}/round-2-codex.md"
 check "the model is passed" 3 calls 'model="m1"'
+check "every configured MCP server is switched off" 3 calls \
+  "-c mcp_servers.probe.enabled=false -c mcp_servers.other-one.enabled=false"
 check "and the effort" 3 calls 'model_reasoning_effort="high"'
 
 printf '%s\n' "- file.txt:2, declined: two is intended." >"${records}/declined.md"

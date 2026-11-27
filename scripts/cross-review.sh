@@ -103,6 +103,24 @@ esac
 ${reviewer_cmd} --version >/dev/null 2>&1 ||
   die "'${reviewer_cmd} --version' failed; set ${reviewer_var} to a command that runs here"
 
+mcp_off=()
+if [[ "${reviewer}" == codex ]]; then
+  # An empty mcp_servers table is merged with the configured one, not put
+  # in its place, so every configured server is switched off by name. A
+  # name that cannot be written as a -c key path cannot be switched off.
+  # shellcheck disable=SC2086 # the command may carry a wrapper
+  mcp_list="$(${codex_cmd} mcp list --json 2>/dev/null)" ||
+    die "'${codex_cmd} mcp list --json' failed, so its MCP servers cannot be switched off"
+  mcp_names="$(printf '%s\n' "${mcp_list}" | sed -n 's/^    "name": "\(.*\)",$/\1/p')"
+  [[ "$(printf '%s\n' "${mcp_list}" | grep -c '"transport"')" -eq "$(printf '%s' "${mcp_names}" | grep -c '')" ]] ||
+    die "could not read the MCP server names from '${codex_cmd} mcp list --json'"
+  for name in ${mcp_names}; do
+    [[ "${name}" =~ ^[A-Za-z0-9_-]+$ ]] ||
+      die "MCP server '${name}' cannot be switched off for the review; rename it"
+    mcp_off+=(-c "mcp_servers.${name}.enabled=false")
+  done
+fi
+
 # A stale remote base would put commits already merged into the review.
 if [[ "${base}" == origin/* ]]; then
   git fetch --quiet origin "${base#origin/}" ||
@@ -112,9 +130,10 @@ git rev-parse --verify --quiet "${base}^{commit}" >/dev/null ||
   die "base '${base}' not found"
 
 # A plain unified diff, whatever the user's git config says about color,
-# external diff tools or path prefixes.
+# external diff tools, textconv filters or path prefixes.
 review_diff() {
-  git diff --no-color --no-ext-diff --src-prefix=a/ --dst-prefix=b/ "$@" "${base}...HEAD"
+  git diff --no-color --no-ext-diff --no-textconv --src-prefix=a/ --dst-prefix=b/ \
+    "$@" "${base}...HEAD"
 }
 
 # Commits only, so the review sees exactly what the pull request will carry.
@@ -171,8 +190,8 @@ The diff against ${base}:
 "
 
 # What keeps the reviewers blind is configuration, not a copy of the tree.
-# Codex loads no AGENTS.md with project_doc_max_bytes=0, and no memory with
-# memories off. Claude Code skips every CLAUDE.md, AGENTS.md and rules file,
+# Codex loads no AGENTS.md with project_doc_max_bytes=0, no memory with
+# memories off, and no MCP server with each one configured switched off. Claude Code skips every CLAUDE.md, AGENTS.md and rules file,
 # project or user, through claudeMdExcludes, and its auto memory. Prompt and
 # diff go on stdin: a single argument is capped at 128 KiB on Linux, and
 # Claude Code's --tools takes every word after it, a positional prompt
@@ -205,10 +224,10 @@ codex)
     --cd "${top}" --output-last-message "${out}.partial"
     -c "model_reasoning_effort=\"${codex_effort}\""
     -c project_doc_max_bytes=0
-    -c 'mcp_servers={}'
-    -c 'web_search="disabled"')
+    -c 'web_search="disabled"'
+    ${mcp_off[@]+"${mcp_off[@]}"})
   # No memory, and no tool that reaches past this checkout: web search
-  # (above), MCP servers (above), apps, plugins, the browser and computer
+  # and MCP servers (above), apps, plugins, the browser and computer
   # use. Its shell stays, inside the read only sandbox, to read the code.
   # Hooks stay on: that is where a command guard lives.
   for feature in memories external_agent_memory_import apps plugins \
