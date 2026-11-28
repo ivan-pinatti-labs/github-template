@@ -19,8 +19,12 @@
 # holds nothing the reviewer should not see.
 #
 # It runs where the reviewer CLIs and their logins are: on a host, or in
-# whatever environment holds them. It is not project code for a container
-# with no network and no credentials, because the reviewer needs both.
+# whatever environment holds them. Or, in a devcontainer-airlock workbench,
+# in L2 through the review broker, which holds a Codex login of its own:
+# `l2 --review -- make cross-review`. There REVIEW_BROKER_SOCKET is set,
+# and the review goes to the broker through its client, airlock-review,
+# which sends the prompt and the tree at HEAD; the broker runs Codex blind
+# in a folder holding nothing else. It serves only REVIEWER=codex so far.
 #
 # Each run is one round, saved under $REVIEW_DIR/<branch>/. The author fixes
 # what holds up, records each finding it declines (with the reason) in
@@ -61,6 +65,8 @@
 #   CLAUDE_REVIEW_EFFORT  Claude effort (default medium)
 #   CLAUDE_MANAGED_MD     the managed CLAUDE.md to warn about (default: the
 #                         Linux and macOS policy paths)
+#   REVIEW_BROKER_SOCKET  set by `l2 --review` in a devcontainer-airlock
+#                         workbench: review through the broker (above)
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -70,6 +76,7 @@ base="${REVIEW_BASE:-origin/main}"
 max_rounds="${REVIEW_MAX_ROUNDS:-3}"
 codex_cmd="${CODEX:-codex}"
 codex_effort="${CODEX_EFFORT:-medium}"
+broker="${REVIEW_BROKER_SOCKET:-}"
 claude_cmd="${CLAUDE:-claude}"
 claude_model="${CLAUDE_REVIEW_MODEL:-opus}"
 claude_effort="${CLAUDE_REVIEW_EFFORT:-medium}"
@@ -84,6 +91,11 @@ codex) reviewer_cmd="${codex_cmd}" reviewer_var=CODEX ;;
 claude) reviewer_cmd="${claude_cmd}" reviewer_var=CLAUDE ;;
 *) die "REVIEWER must be codex or claude, not '${reviewer}'" ;;
 esac
+if [[ -n "${broker}" ]]; then
+  [[ "${reviewer}" == codex ]] ||
+    die "the review broker serves only REVIEWER=codex; run REVIEWER=${reviewer} where its CLI and login are"
+  reviewer_cmd=airlock-review reviewer_var=PATH
+fi
 [[ "${max_rounds}" =~ ^[1-9][0-9]*$ ]] ||
   die "REVIEW_MAX_ROUNDS must be a positive integer, not '${max_rounds}'"
 
@@ -97,7 +109,13 @@ fi
 cd "${top}"
 if [[ -z "${review_root}" ]]; then
   # The main checkout, not this worktree: the record outlives the worktree.
+  # Through the broker it runs in L2, which mounts only this checkout (and
+  # the git directory): the main one's folder there would be a throwaway,
+  # so the record stays in this checkout.
   main="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
+  if [[ -n "${broker}" ]]; then
+    main="${top}"
+  fi
   review_root="${main:-${top}}/.cross-review"
 fi
 
@@ -108,12 +126,20 @@ main | master) die "on ${branch}: review runs on a topic branch" ;;
 esac
 
 # Fail early, with the reason, rather than after the prompt is built.
-# shellcheck disable=SC2086 # the command may carry a wrapper and its arguments
-${reviewer_cmd} --version >/dev/null 2>&1 ||
-  die "'${reviewer_cmd} --version' failed; set ${reviewer_var} to a command that runs here"
+if [[ -n "${broker}" ]]; then
+  command -v airlock-review >/dev/null ||
+    die "REVIEW_BROKER_SOCKET is set but there is no airlock-review here; run this through l2 --review"
+  [[ -S "${broker}" ]] ||
+    die "no review broker at ${broker}; on the host: host/workbench review-login (once)"
+else
+  # shellcheck disable=SC2086 # the command may carry a wrapper and its arguments
+  ${reviewer_cmd} --version >/dev/null 2>&1 ||
+    die "'${reviewer_cmd} --version' failed; set ${reviewer_var} to a command that runs here"
+fi
 
 mcp_off=()
-if [[ "${reviewer}" == codex ]]; then
+# The broker's Codex has no configuration at all, MCP servers included.
+if [[ "${reviewer}" == codex && -z "${broker}" ]]; then
   # An empty mcp_servers table is merged with the configured one, not put
   # in its place, so every configured server is switched off by name. A
   # name that cannot be written as a -c key path cannot be switched off.
@@ -239,9 +265,10 @@ if [[ "${reviewer}" == codex ]]; then
   fi
   # project_doc_max_bytes covers the repository's AGENTS.md files. Codex's
   # own global one, in its home folder, is the user's to keep out, as is a
-  # model_instructions_file in the user's own Codex config.
+  # model_instructions_file in the user's own Codex config. The broker's
+  # Codex has neither.
   for global in "${CODEX_HOME:-${HOME}/.codex}"/AGENTS{,.override}.md; do
-    if [[ -e "${global}" ]]; then
+    if [[ -z "${broker}" && -e "${global}" ]]; then
       echo "cross-review: ${global} exists and may still reach the reviewer; the review is not fully blind" >&2
     fi
   done
@@ -295,12 +322,23 @@ codex)
   if [[ -n "${CODEX_MODEL:-}" ]]; then
     codex_args+=(-c "model=\"${CODEX_MODEL}\"")
   fi
-  # shellcheck disable=SC2086 # the command may carry a wrapper
-  {
-    printf '%s\n' "${prompt}"
-    review_diff
-  } |
-    ${codex_cmd} "${codex_args[@]}" - >&2 || status=$?
+  if [[ -n "${broker}" ]]; then
+    # The broker owns the command line: only the model and the effort are
+    # asked for, and the answer comes back on stdout.
+    {
+      printf '%s\n' "${prompt}"
+      review_diff
+    } |
+      airlock-review --reviewer codex --effort "${codex_effort}" \
+        ${CODEX_MODEL:+--model "${CODEX_MODEL}"} >"${out}.partial" || status=$?
+  else
+    # shellcheck disable=SC2086 # the command may carry a wrapper
+    {
+      printf '%s\n' "${prompt}"
+      review_diff
+    } |
+      ${codex_cmd} "${codex_args[@]}" - >&2 || status=$?
+  fi
   ;;
 claude)
   # --restricted: no Bash or other tool that runs code, no web, file tools

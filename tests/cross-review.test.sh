@@ -13,7 +13,7 @@ script=scripts/cross-review.sh
 # case below sets what it needs.
 unset REVIEWER REVIEW_BASE REVIEW_DIR REVIEW_MAX_ROUNDS REVIEW_FORCE \
   CODEX CODEX_MODEL CODEX_EFFORT CLAUDE CLAUDE_REVIEW_MODEL CLAUDE_REVIEW_EFFORT \
-  CLAUDE_MANAGED_MD
+  CLAUDE_MANAGED_MD REVIEW_BROKER_SOCKET
 export STUB_STDIN="${__scratch}/stdin"
 
 # The bodies expand when the stubs run, not here.
@@ -225,6 +225,41 @@ caller="${work}/.claude/worktrees/side/sub"
 mkdir -p "${caller}"
 (cd "${caller}" && REVIEW_DIR=rel STUB_ANSWER="VERDICT: CLEAN" run "${script}" && cp "${__scratch}/err" "${__scratch}/err.rel")
 check "a relative REVIEW_DIR is the caller's" 0 "${__scratch}/err.rel" "saved to ${caller}/rel/feat/side/round-1-codex.md"
+
+rm -rf "${caller}"
+
+# Through the review broker (l2 --review in a devcontainer-airlock
+# workbench): airlock-review takes the prompt, and the broker's Codex has
+# no configuration to check or warn about.
+# shellcheck disable=SC2016
+stub airlock-review '
+cat >"${STUB_STDIN}"
+[ -n "${STUB_EXIT:-}" ] && exit "${STUB_EXIT}"
+printf "%s" "${STUB_ANSWER:-}"'
+broker_sock="${__scratch}/review.sock"
+REVIEW_BROKER_SOCKET="${broker_sock}" run "${script}"
+check "no broker socket" 1 err "cross-review: no review broker at ${broker_sock}; on the host: host/workbench review-login (once)"
+python3 -c 'import socket, sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])' "${broker_sock}"
+REVIEWER=claude REVIEW_BROKER_SOCKET="${broker_sock}" run "${script}"
+check "the broker serves only codex" 1 err \
+  "cross-review: the review broker serves only REVIEWER=codex; run REVIEWER=claude where its CLI and login are"
+mkdir -p "${HOME}/.codex"
+touch "${HOME}/.codex/AGENTS.md"
+REVIEW_BROKER_SOCKET="${broker_sock}" STUB_MCP='bad' STUB_ANSWER="VERDICT: CLEAN" run "${script}"
+check "a review through the broker" 0 calls "airlock-review --reviewer codex --effort medium"
+check "its record stays in this checkout" 0 err "saved to ${work}/.claude/worktrees/side/.cross-review/feat/side/round-1-codex.md"
+check "the prompt and the diff go to it" 0 "${STUB_STDIN}" "+two"
+refute "no codex is run" calls "codex exec"
+refute "nor asked for its MCP servers" calls "codex mcp"
+refute "no global AGENTS.md warning" err "AGENTS.md exists"
+rm -rf "${HOME}/.codex"
+REVIEW_BROKER_SOCKET="${broker_sock}" CODEX_MODEL=gpt-x CODEX_EFFORT=high STUB_ANSWER="VERDICT: FINDINGS" run "${script}"
+check "the model and effort asked for" 3 calls "airlock-review --reviewer codex --effort high --model gpt-x"
+REVIEW_BROKER_SOCKET="${broker_sock}" STUB_EXIT=126 run "${script}"
+check "a refusal from the broker" 7 err "cross-review: codex failed with status 126; round 3 not counted"
+rm "${__scratch}/bin/airlock-review"
+REVIEW_BROKER_SOCKET="${broker_sock}" run "${script}"
+check "no client" 1 err "cross-review: REVIEW_BROKER_SOCKET is set but there is no airlock-review here; run this through l2 --review"
 
 mkdir -p "${__scratch}/nowhere"
 cd "${__scratch}/nowhere"
