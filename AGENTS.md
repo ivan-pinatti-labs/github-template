@@ -125,7 +125,11 @@ from two different vendors, and then CodeRabbit's once it is marked ready:
    (organization policy) `CLAUDE.md`. The script warns about the global
    `AGENTS.md` and the managed `CLAUDE.md`. Round 1 gets none of the
    author's reasoning, so it judges the change on its own. It runs where
-   the reviewer CLIs and their logins are, never in L2. Codex's sandbox
+   the reviewer CLIs and their logins are. In a devcontainer-airlock
+   workbench, which holds no other agent's login, `l2 --review -- make
+   cross-review` runs it in L2 and hands the review to the airlock's review
+   broker, which holds a Codex login of its own (the Codex reviewer only,
+   so far). Codex's sandbox
    stops writes and the network but not reads: its shell can read any file
    the user running it can, so where that matters, run it as a user or in a
    container holding nothing private.
