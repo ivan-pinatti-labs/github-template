@@ -258,7 +258,21 @@ check "the model and effort asked for" 3 calls "airlock-review --reviewer codex 
 REVIEW_BROKER_SOCKET="${broker_sock}" STUB_EXIT=126 run "${script}"
 check "a refusal from the broker" 7 err "cross-review: codex failed with status 126; round 3 not counted"
 rm "${__scratch}/bin/airlock-review"
-REVIEW_BROKER_SOCKET="${broker_sock}" run "${script}"
+# A real client on PATH (an L2 image ships one) must not answer here: each
+# PATH folder holding one is swapped for links to everything else in it.
+no_client=""
+IFS=: read -ra path_dirs <<<"${PATH}"
+for d in "${path_dirs[@]}"; do
+  if [[ -e "${d}/airlock-review" ]]; then
+    m="$(mktemp -d "${__scratch}/path.XXXXXX")"
+    for f in "${d}"/*; do
+      [[ "${f##*/}" == airlock-review ]] || ln -s "${f}" "${m}/"
+    done
+    d="${m}"
+  fi
+  no_client="${no_client:+${no_client}:}${d}"
+done
+PATH="${no_client}" REVIEW_BROKER_SOCKET="${broker_sock}" run "${script}"
 check "no client" 1 err "cross-review: REVIEW_BROKER_SOCKET is set but there is no airlock-review here; run this through l2 --review"
 
 mkdir -p "${__scratch}/nowhere"
